@@ -28,3 +28,22 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **21/21 cards verified.**
 
+# Application Reference verification — 2026-07-22 19:27 UTC
+
+Every card recomputed independently from live Grist REST (tolerance 0.1).
+
+| Card | Result |
+|------|--------|
+| App: Total Time | ✅ matches live Grist |
+| App: Total PIC | ✅ matches live Grist |
+| App: Airplane | ✅ matches live Grist |
+| App: Rotorcraft | ✅ matches live Grist |
+| App: Fixed-Wing Turbine | ✅ matches live Grist |
+| App: Fixed-Wing Turbine PIC | ✅ matches live Grist |
+| App: Turbine (All Categories) | ✅ matches live Grist |
+| Totals by Aircraft | ✅ matches live Grist |
+| FAA 8710 — Hours by Category | ✅ matches live Grist |
+| Class Hours (PIC / SIC) | ✅ matches live Grist |
+| Currency — Block Hours by Recency | ✅ matches live Grist |
+
+**11/11 cards verified.**
