@@ -4,6 +4,31 @@ Metabase dashboards over the self-hosted Grist pilot logbook on mintbox.
 Grist stays the single source of truth (pure backend); Metabase is a
 read-only, prettier frontend.
 
+## Status — BETA (2026-07-22)
+
+Functional and fully verified, not yet aesthetically polished. Active
+branch: **`metabase-build`** (local only); `main` is the initial stub and
+the target of the eventual merge once the user blesses the beta.
+
+This is the visualization half of the larger logbook system (end state:
+SkedPlus → automatic import into Grist + this frontend serving daily ops
+and **airline applications**; the import half lives in the `logbook` repo,
+branch `logbook-grist` — that repo's `distribute`/`enhanced-map` branches
+are deprecated). System-level roadmap: `~/Developer/homelab/TODO.md`
+("🎯 End state" section).
+
+Toward 1.0 from here:
+- **Aesthetic pass** — theming/branding, tile sizing, number formatting,
+  chart colors (Metabase appearance settings are admin-UI or
+  enterprise-API territory; the free tier still allows layout + viz
+  polish per card).
+- **Close the schema gaps** (below) so the Application Reference
+  dashboard can fully replace the gh-pages app sheets — each needs a
+  USER-approved Grist schema addition; never invent the numbers.
+- **Currency/recency extras** as flying picks up: rolling 30/60/90-day
+  tiles, landings currency (61.57), IFR currency inputs if approaches/
+  holds get logged consistently.
+
 **URL: <http://100.78.241.102:3000>** (Tailscale-only bind, like Grist).
 Login: `whoostie@gmail.com`; the admin password lives on mintbox in the
 gitignored **`~/Developer/logbook-visualize/.env`** (`MB_ADMIN_PASSWORD`,
