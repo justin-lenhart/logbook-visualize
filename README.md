@@ -145,6 +145,20 @@ All provisioning is idempotent (cards are archived and recreated by name;
 dashboards updated in place). Everything uses the Python stdlib — no pip
 installs needed on mintbox.
 
+## Grist embedding (live since 2026-07-23)
+
+Both dashboards are embedded into the Grist doc as pages, via Custom-URL
+widgets pointing at the public links in [`embed-urls.md`](embed-urls.md)
+(with `#bordered=false&titled=false` for clean iframes):
+
+- Grist page **"Analytics (Metabase)"** → Daily Ops dashboard
+- Grist page **"Application Reference"** → Application Reference dashboard
+
+The embeds render the live dashboards — **any appearance/content edit made
+in Metabase auto-reflects in the Grist pages** (same URL, no re-embed
+needed). Per-card public links also exist in `embed-urls.md` if Grist
+pages ever want to compose individual charts widget-by-widget.
+
 ## Operations
 
 - Sync cadence: every 15 min (`crontab -l` → the `# logbook-visualize sync`
