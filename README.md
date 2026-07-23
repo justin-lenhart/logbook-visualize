@@ -10,12 +10,13 @@ Functional and fully verified, not yet aesthetically polished. Active
 branch: **`metabase-build`** (local only); `main` is the initial stub and
 the target of the eventual merge once the user blesses the beta.
 
-This is the visualization half of the larger logbook system (end state:
-SkedPlus → automatic import into Grist + this frontend serving daily ops
-and **airline applications**; the import half lives in the `logbook` repo,
-branch `logbook-grist` — that repo's `distribute`/`enhanced-map` branches
-are deprecated). System-level roadmap: `~/Developer/homelab/TODO.md`
-("🎯 End state" section).
+This is the visualization half of the larger logbook system. The import
+half is **live as of 2026-07-23**: SkedPlus files dropped on the Mac
+auto-import into Grist via Syncthing + systemd watchers (see the `logbook`
+repo, branch `logbook-grist`; its `distribute`/`enhanced-map` branches are
+deprecated). Airtable is fully retired — frozen pre-cutover backup only.
+This frontend is the remaining beta piece. System-level roadmap:
+`~/Developer/homelab/TODO.md` ("🎯 End state" section).
 
 Toward 1.0 from here:
 - **Aesthetic pass** — theming/branding, tile sizing, number formatting,
