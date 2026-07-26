@@ -20,8 +20,22 @@ CUR_MONTH = ("Flight_Date >= strftime('%s', date('now','start of month')) "
              "AND Flight_Date < strftime('%s', date('now','start of month','+1 month')) "
              "AND Legacy_Summary = 0")
 
+# "Last Update" tile: sync time stamped into logbook.db by sync-grist.sh
+# (sync_meta.synced_at, epoch UTC) -> 'HHMMZ | DD MMM YYYY'
+TS_SQL = (
+    "SELECT strftime('%H%M', synced_at, 'unixepoch') || 'Z | ' || "
+    "strftime('%d', synced_at, 'unixepoch') || ' ' || "
+    "CASE strftime('%m', synced_at, 'unixepoch') "
+    "WHEN '01' THEN 'Jan' WHEN '02' THEN 'Feb' WHEN '03' THEN 'Mar' "
+    "WHEN '04' THEN 'Apr' WHEN '05' THEN 'May' WHEN '06' THEN 'Jun' "
+    "WHEN '07' THEN 'Jul' WHEN '08' THEN 'Aug' WHEN '09' THEN 'Sep' "
+    "WHEN '10' THEN 'Oct' WHEN '11' THEN 'Nov' WHEN '12' THEN 'Dec' END "
+    "|| ' ' || strftime('%Y', synced_at, 'unixepoch') "
+    "FROM sync_meta ORDER BY synced_at DESC LIMIT 1")
+
 # (name, sql, display, viz)
 CARDS = [
+    ("Ops: Last Update", TS_SQL, "scalar", {}),
     # -- career totals (all ops, legacy INCLUDED) --
     ("Career: Total Time", "SELECT ROUND(SUM(Block_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("Career: PIC", "SELECT ROUND(SUM(PIC_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
@@ -98,26 +112,29 @@ CARDS = [
 ]
 
 # Dashboard layout: 24-column grid. (card name -> row, col, size_x, size_y)
-LAYOUT = {}
-row = 0
+# Row 0 = the Last Update strip; everything else starts at row 3.
+LAYOUT = {"Ops: Last Update": (0, 0, 8, 3)}
 # career tiles: 9 scalars, 2 rows
 for i, n in enumerate(["Career: Total Time", "Career: PIC", "Career: SIC",
                        "Career: Night", "Career: Instrument"]):
-    LAYOUT[n] = (0, i * 5 if i < 4 else 20, 4 if i == 4 else 5, 3)
+    LAYOUT[n] = (3, i * 5 if i < 4 else 20, 4 if i == 4 else 5, 3)
 for i, n in enumerate(["Career: Cross Country", "Career: Credit",
                        "Career: Landings", "Career: Flights"]):
-    LAYOUT[n] = (3, i * 6, 6, 3)
+    LAYOUT[n] = (6, i * 6, 6, 3)
 for i, n in enumerate(["This Month: Block", "This Month: Credit",
                        "This Month: Flights", "This Month: Landings"]):
-    LAYOUT[n] = (6, i * 6, 6, 3)
-LAYOUT["Monthly Block & Credit (Part 121)"] = (9, 0, 24, 6)
-LAYOUT["Planned vs Actual Block by Month"] = (15, 0, 12, 6)
-LAYOUT["Planned vs Actual Credit by Month"] = (15, 12, 12, 6)
-LAYOUT["Avg Trip Credit Index by Month"] = (21, 0, 12, 6)
-LAYOUT["Avg TAFB by Month"] = (21, 12, 12, 6)
-LAYOUT["Block by Category x Position"] = (27, 0, 8, 6)
-LAYOUT["Block by Class x Position"] = (27, 8, 8, 6)
-LAYOUT["Block by Engine x Position"] = (27, 16, 8, 6)
+    LAYOUT[n] = (9, i * 6, 6, 3)
+LAYOUT["Monthly Block & Credit (Part 121)"] = (12, 0, 24, 6)
+LAYOUT["Planned vs Actual Block by Month"] = (18, 0, 12, 6)
+LAYOUT["Planned vs Actual Credit by Month"] = (18, 12, 12, 6)
+LAYOUT["Avg Trip Credit Index by Month"] = (24, 0, 12, 6)
+LAYOUT["Avg TAFB by Month"] = (24, 12, 12, 6)
+LAYOUT["Block by Category x Position"] = (30, 0, 8, 6)
+LAYOUT["Block by Class x Position"] = (30, 8, 8, 6)
+LAYOUT["Block by Engine x Position"] = (30, 16, 8, 6)
+
+# Per-card dashcard visualization overrides (e.g. displayed title)
+DASHCARD_VIZ = {"Ops: Last Update": {"card.title": "Last Update"}}
 
 
 def get_logbook_db_id(mb):
@@ -150,7 +167,7 @@ def archive_cards_by_name(mb, collection_id, names):
             mb.put(f"/api/card/{it['id']}", {"archived": True})
 
 
-def provision(mb, cards, layout, dash_name, db_id, coll_id):
+def provision(mb, cards, layout, dash_name, db_id, coll_id, dashcard_viz=None):
     archive_cards_by_name(mb, coll_id, {c[0] for c in cards})
     dash_id = ensure_dashboard(mb, dash_name, coll_id)
 
@@ -165,7 +182,9 @@ def provision(mb, cards, layout, dash_name, db_id, coll_id):
     for i, (name, *_rest) in enumerate(cards):
         r, c, sx, sy = layout[name]
         dashcards.append({"id": -(i + 1), "card_id": made[name],
-                          "row": r, "col": c, "size_x": sx, "size_y": sy})
+                          "row": r, "col": c, "size_x": sx, "size_y": sy,
+                          "visualization_settings":
+                              (dashcard_viz or {}).get(name, {})})
     mb.put(f"/api/dashboard/{dash_id}", {"dashcards": dashcards})
     print(f"dashboard '{dash_name}' (id {dash_id}) laid out "
           f"with {len(dashcards)} cards")
@@ -177,7 +196,8 @@ def main():
     mb.login()
     db_id = get_logbook_db_id(mb)
     coll_id = ensure_collection(mb)
-    dash_id, _ = provision(mb, CARDS, LAYOUT, DASHBOARD_NAME, db_id, coll_id)
+    dash_id, _ = provision(mb, CARDS, LAYOUT, DASHBOARD_NAME, db_id, coll_id,
+                           dashcard_viz=DASHCARD_VIZ)
     # make Daily Ops the landing page
     mb.put("/api/setting/custom-homepage", {"value": True})
     mb.put("/api/setting/custom-homepage-dashboard", {"value": dash_id})

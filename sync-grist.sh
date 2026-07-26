@@ -56,6 +56,13 @@ try:
     tmp.commit()
     tmp.execute("VACUUM")
 
+    # Stamp the sync time into the copy (feeds the dashboards' "Last
+    # Update" tiles; epoch seconds, UTC).
+    tmp.execute("CREATE TABLE IF NOT EXISTS sync_meta (synced_at INTEGER)")
+    tmp.execute("DELETE FROM sync_meta")
+    tmp.execute("INSERT INTO sync_meta VALUES (?)", (int(time.time()),))
+    tmp.commit()
+
     counts = {t: tmp.execute(f'SELECT COUNT(*) FROM "{t}"').fetchone()[0]
               for t in sorted(KEEP)}
 

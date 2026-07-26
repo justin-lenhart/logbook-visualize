@@ -12,7 +12,7 @@ Usage: python3 scripts/provision_application_ref.py
 """
 from mb import Metabase
 from provision_daily_ops import (get_logbook_db_id, ensure_collection,
-                                 provision)
+                                 provision, TS_SQL)
 
 DASHBOARD_NAME = "Application Reference"
 
@@ -64,6 +64,7 @@ _bucket_cols = ", ".join(
     for label, lo, hi in BUCKETS)
 
 CARDS = [
+    ("App: Last Update", TS_SQL, "scalar", {}),
     ("App: Total Time", "SELECT ROUND(SUM(Block_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("App: Total PIC", "SELECT ROUND(SUM(PIC_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("App: Airplane", f"SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE {AIRPLANE}", "scalar", {"scalar.suffix": " h"}),
@@ -119,18 +120,21 @@ CARDS = [
 ]
 
 LAYOUT = {
-    "App: Total Time": (0, 0, 6, 3),
-    "App: Total PIC": (0, 6, 6, 3),
-    "App: Airplane": (0, 12, 6, 3),
-    "App: Rotorcraft": (0, 18, 6, 3),
-    "App: Fixed-Wing Turbine": (3, 0, 8, 3),
-    "App: Fixed-Wing Turbine PIC": (3, 8, 8, 3),
-    "App: Turbine (All Categories)": (3, 16, 8, 3),
-    "Totals by Aircraft": (6, 0, 24, 9),
-    "FAA 8710 — Hours by Category": (15, 0, 12, 9),
-    "Class Hours (PIC / SIC)": (15, 12, 12, 9),
-    "Currency — Block Hours by Recency": (24, 0, 24, 9),
+    "App: Last Update": (0, 0, 8, 3),
+    "App: Total Time": (3, 0, 6, 3),
+    "App: Total PIC": (3, 6, 6, 3),
+    "App: Airplane": (3, 12, 6, 3),
+    "App: Rotorcraft": (3, 18, 6, 3),
+    "App: Fixed-Wing Turbine": (6, 0, 8, 3),
+    "App: Fixed-Wing Turbine PIC": (6, 8, 8, 3),
+    "App: Turbine (All Categories)": (6, 16, 8, 3),
+    "Totals by Aircraft": (9, 0, 24, 9),
+    "FAA 8710 — Hours by Category": (18, 0, 12, 9),
+    "Class Hours (PIC / SIC)": (18, 12, 12, 9),
+    "Currency — Block Hours by Recency": (27, 0, 24, 9),
 }
+
+DASHCARD_VIZ = {"App: Last Update": {"card.title": "Last Update"}}
 
 
 def main():
@@ -138,7 +142,8 @@ def main():
     mb.login()
     db_id = get_logbook_db_id(mb)
     coll_id = ensure_collection(mb)
-    provision(mb, CARDS, LAYOUT, DASHBOARD_NAME, db_id, coll_id)
+    provision(mb, CARDS, LAYOUT, DASHBOARD_NAME, db_id, coll_id,
+              dashcard_viz=DASHCARD_VIZ)
 
 
 if __name__ == "__main__":

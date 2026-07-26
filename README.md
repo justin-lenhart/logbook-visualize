@@ -80,7 +80,12 @@ Grist doc (live)                       Metabase container
 
 ## Dashboards
 
-**Daily Ops** (homepage, 21 cards): career tiles (total / PIC / SIC /
+Both dashboards open with a **"Last Update: HHMMZ | DD MMM YYYY"** tile
+(UTC) — the time `sync-grist.sh` last copied the Grist doc, stamped into
+`logbook.db` as the `sync_meta` table by the sync itself, so it reflects
+true data freshness (not page-load time).
+
+**Daily Ops** (homepage, 21 data cards + the Last Update tile): career tiles (total / PIC / SIC /
 night / instrument / XC / credit / landings / flights — legacy included),
 current-calendar-month tiles (auto-rolling `date('now','start of month')`
 SQL — equivalent to a relative-date filter, chosen so the cards stay
@@ -89,7 +94,7 @@ excluded), planned-vs-actual block and credit by month, avg Trip Credit
 Index and avg TAFB by month, and Category / Class / Engine × Position
 block-hour pivots.
 
-**Application Reference** (11 cards): headline numbers (total, PIC,
+**Application Reference** (11 data cards + the Last Update tile): headline numbers (total, PIC,
 airplane, rotorcraft, fixed-wing turbine, FW-turbine PIC, all-turbine),
 per-aircraft totals with instructor time and last-flown, FAA 8710
 hours-by-category matrix (incl. night T/O landings split PIC/SIC), class
@@ -145,6 +150,12 @@ printf '%s\n' '*/15 * * * * /home/mint/Developer/logbook-visualize/sync-grist.sh
 All provisioning is idempotent (cards are archived and recreated by name;
 dashboards updated in place). Everything uses the Python stdlib — no pip
 installs needed on mintbox.
+
+> ⚠️ Re-running a provision script recreates its cards with new ids, which
+> **breaks the per-card public links** in `embed-urls.md` (re-run
+> `scripts/enable_embeds.py` after). The two full-dashboard public links
+> survive (dashboards are updated in place) — the Grist embed pages keep
+> working without changes.
 
 ## Grist embedding (live since 2026-07-23)
 
