@@ -120,18 +120,19 @@ CARDS = [
 ]
 
 LAYOUT = {
-    "App: Last Update": (0, 0, 8, 3),
-    "App: Total Time": (3, 0, 6, 3),
-    "App: Total PIC": (3, 6, 6, 3),
-    "App: Airplane": (3, 12, 6, 3),
-    "App: Rotorcraft": (3, 18, 6, 3),
-    "App: Fixed-Wing Turbine": (6, 0, 8, 3),
-    "App: Fixed-Wing Turbine PIC": (6, 8, 8, 3),
-    "App: Turbine (All Categories)": (6, 16, 8, 3),
-    "Totals by Aircraft": (9, 0, 24, 9),
-    "FAA 8710 — Hours by Category": (18, 0, 12, 9),
-    "Class Hours (PIC / SIC)": (18, 12, 12, 9),
-    "Currency — Block Hours by Recency": (27, 0, 24, 9),
+    "App: Total Time": (0, 0, 6, 3),
+    "App: Total PIC": (0, 6, 6, 3),
+    "App: Airplane": (0, 12, 6, 3),
+    "App: Rotorcraft": (0, 18, 6, 3),
+    "App: Fixed-Wing Turbine": (3, 0, 8, 3),
+    "App: Fixed-Wing Turbine PIC": (3, 8, 8, 3),
+    "App: Turbine (All Categories)": (3, 16, 8, 3),
+    "Totals by Aircraft": (6, 0, 24, 9),
+    "FAA 8710 — Hours by Category": (15, 0, 12, 9),
+    "Class Hours (PIC / SIC)": (15, 12, 12, 9),
+    "Currency — Block Hours by Recency": (24, 0, 24, 9),
+    # Last Update: small strip at the very bottom (small tile = small text)
+    "App: Last Update": (33, 0, 6, 2),
 }
 
 DASHCARD_VIZ = {"App: Last Update": {"card.title": "Last Update"}}

@@ -112,26 +112,29 @@ CARDS = [
 ]
 
 # Dashboard layout: 24-column grid. (card name -> row, col, size_x, size_y)
-# Row 0 = the Last Update strip; everything else starts at row 3.
-LAYOUT = {"Ops: Last Update": (0, 0, 8, 3)}
-# career tiles: 9 scalars, 2 rows
+# Scalars are kept >= 5 cols wide (with compact formatting off) so 4-digit
+# hour totals like 1699.9 render in full instead of "1.7k".
+LAYOUT = {}
 for i, n in enumerate(["Career: Total Time", "Career: PIC", "Career: SIC",
-                       "Career: Night", "Career: Instrument"]):
-    LAYOUT[n] = (3, i * 5 if i < 4 else 20, 4 if i == 4 else 5, 3)
-for i, n in enumerate(["Career: Cross Country", "Career: Credit",
-                       "Career: Landings", "Career: Flights"]):
-    LAYOUT[n] = (6, i * 6, 6, 3)
-for i, n in enumerate(["This Month: Block", "This Month: Credit",
-                       "This Month: Flights", "This Month: Landings"]):
-    LAYOUT[n] = (9, i * 6, 6, 3)
-LAYOUT["Monthly Block & Credit (Part 121)"] = (12, 0, 24, 6)
-LAYOUT["Planned vs Actual Block by Month"] = (18, 0, 12, 6)
-LAYOUT["Planned vs Actual Credit by Month"] = (18, 12, 12, 6)
-LAYOUT["Avg Trip Credit Index by Month"] = (24, 0, 12, 6)
-LAYOUT["Avg TAFB by Month"] = (24, 12, 12, 6)
-LAYOUT["Block by Category x Position"] = (30, 0, 8, 6)
-LAYOUT["Block by Class x Position"] = (30, 8, 8, 6)
-LAYOUT["Block by Engine x Position"] = (30, 16, 8, 6)
+                       "Career: Night"]):
+    LAYOUT[n] = (0, i * 6, 6, 3)
+for i, n in enumerate(["Career: Instrument", "Career: Cross Country",
+                       "Career: Credit", "Career: Landings"]):
+    LAYOUT[n] = (3, i * 6, 6, 3)
+for i, n in enumerate(["Career: Flights", "This Month: Block",
+                       "This Month: Credit", "This Month: Flights",
+                       "This Month: Landings"]):
+    LAYOUT[n] = (6, i * 5 if i < 4 else 20, 4 if i == 4 else 5, 3)
+LAYOUT["Monthly Block & Credit (Part 121)"] = (9, 0, 24, 6)
+LAYOUT["Planned vs Actual Block by Month"] = (15, 0, 12, 6)
+LAYOUT["Planned vs Actual Credit by Month"] = (15, 12, 12, 6)
+LAYOUT["Avg Trip Credit Index by Month"] = (21, 0, 12, 6)
+LAYOUT["Avg TAFB by Month"] = (21, 12, 12, 6)
+LAYOUT["Block by Category x Position"] = (27, 0, 8, 6)
+LAYOUT["Block by Class x Position"] = (27, 8, 8, 6)
+LAYOUT["Block by Engine x Position"] = (27, 16, 8, 6)
+# Last Update: small strip at the very bottom (small tile = small text)
+LAYOUT["Ops: Last Update"] = (33, 0, 6, 2)
 
 # Per-card dashcard visualization overrides (e.g. displayed title)
 DASHCARD_VIZ = {"Ops: Last Update": {"card.title": "Last Update"}}
@@ -173,6 +176,9 @@ def provision(mb, cards, layout, dash_name, db_id, coll_id, dashcard_viz=None):
 
     made = {}
     for name, sql, display, viz in cards:
+        if display == "scalar":
+            # never abbreviate scalars ("1.7k") — show the full number
+            viz = {"scalar.compact_primary_number": False, **viz}
         card = mb.native_card(name, sql, display=display, viz=viz,
                               collection_id=coll_id, database_id=db_id)
         made[name] = card["id"]
