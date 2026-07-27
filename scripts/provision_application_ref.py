@@ -111,12 +111,26 @@ CARDS = [
          {"name": "PIC", "enabled": True},
          {"name": "SIC", "enabled": True}]}),
 
+    # TOTAL row is part of the result set (UNION ALL) so it always renders
+    # with the table; the hidden sortkey pins it to the top by default.
     ("Currency — Block Hours by Recency",
      "SELECT a.Aircraft, " + _bucket_cols + ", "
-     f"ROUND(SUM(CASE WHEN {MONTHS_AGO} > 60 THEN f.Block_Time ELSE 0 END),1) AS Older "
-     "FROM Flights f JOIN Aircraft a ON f.Aircraft = a.id "
-     "GROUP BY a.id ORDER BY MAX(f.Flight_Date) DESC",
-     "table", {}),
+     f"ROUND(SUM(CASE WHEN {MONTHS_AGO} > 60 THEN f.Block_Time ELSE 0 END),1) AS Older, "
+     "MAX(f.Flight_Date) AS sortkey "
+     "FROM Flights f JOIN Aircraft a ON f.Aircraft = a.id GROUP BY a.id "
+     "UNION ALL SELECT 'TOTAL', " + _bucket_cols + ", "
+     f"ROUND(SUM(CASE WHEN {MONTHS_AGO} > 60 THEN f.Block_Time ELSE 0 END),1), "
+     "9999999999 FROM Flights f "
+     "ORDER BY sortkey DESC",
+     "table", {"table.columns": [
+         {"name": "Aircraft", "enabled": True},
+         {"name": "0-12 mo", "enabled": True},
+         {"name": "13-24", "enabled": True},
+         {"name": "25-36", "enabled": True},
+         {"name": "37-48", "enabled": True},
+         {"name": "49-60", "enabled": True},
+         {"name": "Older", "enabled": True},
+         {"name": "sortkey", "enabled": False}]}),
 ]
 
 LAYOUT = {

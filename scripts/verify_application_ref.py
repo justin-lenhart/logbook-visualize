@@ -109,6 +109,8 @@ def build_expected():
         idx = 0 if m <= 12 else 1 if m <= 24 else 2 if m <= 36 else \
             3 if m <= 48 else 4 if m <= 60 else 5
         cur[name][idx] += num(f.get("Block_Time"))
+    cur["TOTAL"] = [sum(v[i] for n, v in cur.items() if n != "TOTAL")
+                    for i in range(6)]
     exp["Currency — Block Hours by Recency"] = {
         name: tuple(round(x, 1) for x in v) for name, v in cur.items()}
     return exp

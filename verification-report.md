@@ -28,7 +28,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **21/21 cards verified.**
 
-# Application Reference verification — 2026-07-26 16:59 UTC
+# Application Reference verification — 2026-07-27 20:29 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
