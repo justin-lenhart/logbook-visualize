@@ -102,6 +102,27 @@ hours PIC/SIC (ASEL / AMEL / Helicopter / Powered Lift), and
 currency-by-recency block-hour buckets (0–12 / 13–24 / 25–36 / 37–48 /
 49–60 / older months).
 
+**Trip Efficiency & Duty Legality** (25 data cards + a disclaimer card;
+`scripts/provision_duty_legality.py`): ⚠️ **personal analytics, NOT a
+compliance system** — the dashboard carries a visible disclaimer; the
+company's official system is the sole legality authority. Part 117
+legality awareness (citations verified vs eCFR through 2026-07-23):
+per-duty FDP + block utilization vs Table A (§117.11, 8/9 h) and Table B
+(§117.13, 9/14 h) shown as **floor–ceiling ranges** because local
+acclimated report time is underivable (`Airports.UTC_Offset` is all
+zeros — see GAPS); within-trip rest vs the §117.25(e) 10-h minimum;
+all four §117.23 cumulative windows as progress bars (100 h/672 h,
+1,000 h/365 d, 60 h/168 h, 190 h/672 h) plus rolling-by-day trend lines
+with cap goal-lines. FDP = report→release (conservative proxy;
+report→last-block-in also shown per duty). Deadhead excluded from
+flight-time sums. Efficiency: credit/block per TAFB-day, TCI,
+days-between-trips, planned-vs-actual variance, monthly trend, per-duty
+and per-trip detail tables. **Drill-down:** dashboard filter widgets
+(start/end date, trip, aircraft — typed values, not dropdowns, since
+they're template-tag variables) and click-through from every summary
+scalar to its underlying detail table. Rolling-window "current" cards
+are deliberately unfiltered (always as-of-now).
+
 ## Verification
 
 Every card is recomputed **independently from the live Grist REST API**
@@ -131,6 +152,7 @@ to Grist). Schema additions that would close each gap are listed.
 | Milestone table (summary: 1000 FW-turbine-PIC, 1500 turbine, 1000 FW-turbine) | Milestone *targets* are business constants, not data; only the "have" side is derivable (built as headline scalars) | a small `Milestones` table (name, metric, target) |
 | SWA "Aircraft Category Totals" buckets (Jet/Turbine, Military Trainers, Turbo Prop ME, Light Piston, Heli/Power Lift) | Bucket membership is app-specific business logic (e.g. T-6B's *instruction received* counted as SIC) not encoded in any column | `Aircraft.SWA_Bucket` (choice) — plus a decision on the Instr-Recv-as-SIC rule |
 | Per-airframe merged rows (TH-57B/C, CRJ-200/700/900 on the pages) | Grist tracks them as separate Aircraft rows; the merge is page cosmetics. Dashboard shows them unmerged (honest, still verifiable) | none needed (could group by `FAA_Type` if merging is wanted) |
+| Exact Table A/B legality limits (duty legality dashboard) | §117.11/§117.13 limits key off LOCAL acclimated report time; `Airports.UTC_Offset` is 0.0 for all 20,576 rows, so local time is underivable — dashboard shows floor–ceiling utilization ranges instead | USER DECISION: populate `UTC_Offset` for the ~40 airports actually flown, or derive offsets from lat/lon (timezonefinder) — either unlocks exact per-duty limits |
 
 ## How to rebuild from scratch
 
