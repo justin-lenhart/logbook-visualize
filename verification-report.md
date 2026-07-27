@@ -48,3 +48,37 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 | Currency — Block Hours by Recency | ✅ matches live Grist |
 
 **11/11 cards verified.**
+
+# Trip Efficiency & Duty Legality verification — 2026-07-27 20:50 UTC
+
+Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 on now-anchored rolling windows). FDP = report→release (conservative proxy); Table A/B shown as floor/ceiling pending local-time data.
+
+| Card | Result |
+|------|--------|
+| Avg FDP Length (h) | ✅ matches live Grist |
+| Avg FDP % of Table B floor 9h (§117.13) | ✅ matches live Grist |
+| Avg FDP % of Table B ceiling 14h (§117.13) | ✅ matches live Grist |
+| Avg Block per Duty (h) | ✅ matches live Grist |
+| Avg Block % of Table A floor 8h (§117.11) | ✅ matches live Grist |
+| Avg Block % of Table A ceiling 9h (§117.11) | ✅ matches live Grist |
+| Avg Rest Between Duties (h) | ✅ matches live Grist |
+| Min Rest Between Duties (h) | ✅ matches live Grist |
+| Avg Rest Ratio % of 10h min (§117.25(e)) | ✅ matches live Grist |
+| Rests Under 10h (count, §117.25(e)) | ✅ matches live Grist |
+| Flight Time last 672h — cap 100h (§117.23(b)(1)) | ✅ matches live Grist |
+| Flight Time last 365d — cap 1000h (§117.23(b)(2)) | ✅ matches live Grist |
+| FDP Hours last 168h — cap 60h (§117.23(c)(1)) | ✅ matches live Grist |
+| FDP Hours last 672h — cap 190h (§117.23(c)(2)) | ✅ matches live Grist |
+| Rolling 672h Flight Time by Day (cap 100h) | ✅ matches live Grist |
+| Rolling 168h FDP Hours by Day (cap 60h) | ✅ matches live Grist |
+| Avg Credit per TAFB Day | ✅ matches live Grist |
+| Avg Block per TAFB Day | ✅ matches live Grist |
+| Avg Trip Credit Index | ✅ matches live Grist |
+| Avg Days Between Trips | ✅ matches live Grist |
+| Avg Block Variance per Trip (h) | ✅ matches live Grist |
+| Avg Credit Variance per Trip (h) | ✅ matches live Grist |
+| Credit & Block per TAFB Day by Month | ✅ matches live Grist |
+| Duty Period Legality Detail | ✅ 54 rows == live Grist |
+| Trip Efficiency Detail | ✅ 22 rows == live Grist |
+
+**25/25 cards verified.**
