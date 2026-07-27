@@ -87,7 +87,7 @@ true data freshness (not page-load time).
 
 **Daily Ops** (homepage, 21 data cards + the Last Update tile): career tiles (total / PIC / SIC /
 night / instrument / XC / credit / landings / flights — legacy included),
-current-calendar-month tiles (auto-rolling `date('now','start of month')`
+a "Passengers Adventured" total, current-calendar-month tiles (auto-rolling `date('now','start of month')`
 SQL — equivalent to a relative-date filter, chosen so the cards stay
 native-SQL and verifiable), monthly block+credit trend (Part 121, legacy
 excluded), planned-vs-actual block and credit by month, avg Trip Credit

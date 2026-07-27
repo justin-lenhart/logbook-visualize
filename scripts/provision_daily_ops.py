@@ -46,6 +46,7 @@ CARDS = [
     ("Career: Credit", "SELECT ROUND(SUM(Credit_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("Career: Landings", "SELECT CAST(SUM(Total_Landing) AS INT) FROM Flights", "scalar", {}),
     ("Career: Flights", "SELECT COUNT(*) FROM Flights", "scalar", {}),
+    ("Passengers Adventured", "SELECT CAST(SUM(Passengers) AS INT) FROM Flights", "scalar", {}),
 
     # -- current calendar month (rolls over automatically; legacy excluded) --
     ("This Month: Block", f"SELECT ROUND(COALESCE(SUM(Block_Time),0),1) FROM Flights WHERE {CUR_MONTH}", "scalar", {"scalar.suffix": " h"}),
@@ -121,10 +122,10 @@ for i, n in enumerate(["Career: Total Time", "Career: PIC", "Career: SIC",
 for i, n in enumerate(["Career: Instrument", "Career: Cross Country",
                        "Career: Credit", "Career: Landings"]):
     LAYOUT[n] = (3, i * 6, 6, 3)
-for i, n in enumerate(["Career: Flights", "This Month: Block",
-                       "This Month: Credit", "This Month: Flights",
-                       "This Month: Landings"]):
-    LAYOUT[n] = (6, i * 5 if i < 4 else 20, 4 if i == 4 else 5, 3)
+for i, n in enumerate(["Career: Flights", "Passengers Adventured",
+                       "This Month: Block", "This Month: Credit",
+                       "This Month: Flights", "This Month: Landings"]):
+    LAYOUT[n] = (6, i * 4, 4, 3)
 LAYOUT["Monthly Block & Credit (Part 121)"] = (9, 0, 24, 6)
 LAYOUT["Planned vs Actual Block by Month"] = (15, 0, 12, 6)
 LAYOUT["Planned vs Actual Credit by Month"] = (15, 12, 12, 6)

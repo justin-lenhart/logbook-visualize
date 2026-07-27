@@ -1,4 +1,4 @@
-# Daily Ops verification — 2026-07-26 16:59 UTC
+# Daily Ops verification — 2026-07-27 20:37 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -13,6 +13,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 | Career: Credit | ✅ matches live Grist |
 | Career: Landings | ✅ matches live Grist |
 | Career: Flights | ✅ matches live Grist |
+| Passengers Adventured | ✅ matches live Grist |
 | This Month: Block | ✅ matches live Grist |
 | This Month: Credit | ✅ matches live Grist |
 | This Month: Flights | ✅ matches live Grist |
@@ -26,7 +27,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 | Block by Class x Position | ✅ matches live Grist |
 | Block by Engine x Position | ✅ matches live Grist |
 
-**21/21 cards verified.**
+**22/22 cards verified.**
 
 # Application Reference verification — 2026-07-27 20:29 UTC
 
