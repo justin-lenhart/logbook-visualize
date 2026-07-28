@@ -1,4 +1,4 @@
-# Daily Ops verification — 2026-07-27 20:37 UTC
+# Daily Ops verification — 2026-07-28 18:11 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -29,7 +29,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **22/22 cards verified.**
 
-# Application Reference verification — 2026-07-27 20:29 UTC
+# Application Reference verification — 2026-07-28 18:11 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -49,7 +49,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **11/11 cards verified.**
 
-# Trip Efficiency & Duty Legality verification — 2026-07-27 20:50 UTC
+# Trip Efficiency & Duty Legality verification — 2026-07-28 18:11 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 on now-anchored rolling windows). FDP = report→release (conservative proxy); Table A/B shown as floor/ceiling pending local-time data.
 

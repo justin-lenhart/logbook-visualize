@@ -26,10 +26,10 @@ def build_expected():
     def s(field, pred=lambda f: True):
         return round(sum(num(f.get(field)) for f in flights if pred(f)), 1)
 
-    airplane = lambda f: f.get("Category_from_Aircraft") == "Airplane"
-    heli = lambda f: f.get("Category_from_Aircraft") == "Helicopter"
-    plift = lambda f: f.get("Category_from_Aircraft") == "Powered Lift"
-    rotor = lambda f: f.get("Class_from_Aircraft") == "Rotorcraft"
+    airplane = lambda f: f.get("Category") == "Airplane"
+    heli = lambda f: f.get("Category") == "Helicopter"
+    plift = lambda f: f.get("Category") == "Powered Lift"
+    rotor = lambda f: f.get("Class") == "Rotorcraft"
     fw_turb = lambda f: airplane(f) and f.get("Engine_Category_from_Aircraft") == "Turbine"
 
     exp = {}
@@ -90,8 +90,8 @@ def build_expected():
                         s(fld, lambda f: plift(f) and pred(f)))
     exp["FAA 8710 — Hours by Category"] = m8710
 
-    asel = lambda f: airplane(f) and f.get("Class_from_Aircraft") == "Single-Engine Land"
-    amel = lambda f: airplane(f) and f.get("Class_from_Aircraft") == "Multi-Engine Land"
+    asel = lambda f: airplane(f) and f.get("Class") == "Single-Engine Land"
+    amel = lambda f: airplane(f) and f.get("Class") == "Multi-Engine Land"
     exp["Class Hours (PIC / SIC)"] = {
         "ASEL": (s("PIC_Time", asel), s("SIC_Time", asel)),
         "AMEL": (s("PIC_Time", amel), s("SIC_Time", amel)),

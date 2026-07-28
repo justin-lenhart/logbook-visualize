@@ -101,8 +101,8 @@ def build_expected():
         m: (round(sum(v) / len(v), 1),) for m, v in tafb.items()}
 
     # pivots (legacy included, all ops)
-    for card, field in [("Block by Category x Position", "Category_from_Aircraft"),
-                        ("Block by Class x Position", "Class_from_Aircraft"),
+    for card, field in [("Block by Category x Position", "Category"),
+                        ("Block by Class x Position", "Class"),
                         ("Block by Engine x Position", "Engine_Category_from_Aircraft")]:
         piv = defaultdict(lambda: [0.0, 0.0, 0.0])
         for f in flights:

@@ -16,7 +16,7 @@ from provision_daily_ops import (get_logbook_db_id, ensure_collection,
 
 DASHBOARD_NAME = "Application Reference"
 
-AIRPLANE = "Category_from_Aircraft = 'Airplane'"
+AIRPLANE = "Category = 'Airplane'"
 FW_TURB = f"{AIRPLANE} AND Engine_Category_from_Aircraft = 'Turbine'"
 
 MONTHS_AGO = ("(CAST(strftime('%Y','now') AS INT)*12 + CAST(strftime('%m','now') AS INT)) - "
@@ -26,9 +26,9 @@ MONTHS_AGO = ("(CAST(strftime('%Y','now') AS INT)*12 + CAST(strftime('%m','now')
 
 def _8710_row(ord_, label, expr):
     return (f"SELECT {ord_} AS ord, '{label}' AS Metric, "
-            f"ROUND(SUM(CASE WHEN Category_from_Aircraft='Airplane' THEN {expr} ELSE 0 END),1) AS Airplane, "
-            f"ROUND(SUM(CASE WHEN Category_from_Aircraft='Helicopter' THEN {expr} ELSE 0 END),1) AS Rotorcraft, "
-            f"ROUND(SUM(CASE WHEN Category_from_Aircraft='Powered Lift' THEN {expr} ELSE 0 END),1) AS [Powered Lift] "
+            f"ROUND(SUM(CASE WHEN Category='Airplane' THEN {expr} ELSE 0 END),1) AS Airplane, "
+            f"ROUND(SUM(CASE WHEN Category='Helicopter' THEN {expr} ELSE 0 END),1) AS Rotorcraft, "
+            f"ROUND(SUM(CASE WHEN Category='Powered Lift' THEN {expr} ELSE 0 END),1) AS [Powered Lift] "
             f"FROM Flights")
 
 
@@ -68,7 +68,7 @@ CARDS = [
     ("App: Total Time", "SELECT ROUND(SUM(Block_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("App: Total PIC", "SELECT ROUND(SUM(PIC_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("App: Airplane", f"SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE {AIRPLANE}", "scalar", {"scalar.suffix": " h"}),
-    ("App: Rotorcraft", "SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE Class_from_Aircraft = 'Rotorcraft'", "scalar", {"scalar.suffix": " h"}),
+    ("App: Rotorcraft", "SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE Class = 'Rotorcraft'", "scalar", {"scalar.suffix": " h"}),
     ("App: Fixed-Wing Turbine", f"SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE {FW_TURB}", "scalar", {"scalar.suffix": " h"}),
     ("App: Fixed-Wing Turbine PIC", f"SELECT ROUND(SUM(PIC_Time),1) FROM Flights WHERE {FW_TURB}", "scalar", {"scalar.suffix": " h"}),
     ("App: Turbine (All Categories)", "SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE Engine_Category_from_Aircraft = 'Turbine'", "scalar", {"scalar.suffix": " h"}),
@@ -93,17 +93,17 @@ CARDS = [
 
     ("Class Hours (PIC / SIC)",
      "SELECT 1 AS ord, 'ASEL' AS Class, "
-     "ROUND(SUM(CASE WHEN Category_from_Aircraft='Airplane' AND Class_from_Aircraft='Single-Engine Land' THEN PIC_Time ELSE 0 END),1) AS PIC, "
-     "ROUND(SUM(CASE WHEN Category_from_Aircraft='Airplane' AND Class_from_Aircraft='Single-Engine Land' THEN SIC_Time ELSE 0 END),1) AS SIC FROM Flights "
+     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Single-Engine Land' THEN PIC_Time ELSE 0 END),1) AS PIC, "
+     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Single-Engine Land' THEN SIC_Time ELSE 0 END),1) AS SIC FROM Flights "
      "UNION ALL SELECT 2, 'AMEL', "
-     "ROUND(SUM(CASE WHEN Category_from_Aircraft='Airplane' AND Class_from_Aircraft='Multi-Engine Land' THEN PIC_Time ELSE 0 END),1), "
-     "ROUND(SUM(CASE WHEN Category_from_Aircraft='Airplane' AND Class_from_Aircraft='Multi-Engine Land' THEN SIC_Time ELSE 0 END),1) FROM Flights "
+     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Multi-Engine Land' THEN PIC_Time ELSE 0 END),1), "
+     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Multi-Engine Land' THEN SIC_Time ELSE 0 END),1) FROM Flights "
      "UNION ALL SELECT 3, 'Helicopter', "
-     "ROUND(SUM(CASE WHEN Class_from_Aircraft='Rotorcraft' THEN PIC_Time ELSE 0 END),1), "
-     "ROUND(SUM(CASE WHEN Class_from_Aircraft='Rotorcraft' THEN SIC_Time ELSE 0 END),1) FROM Flights "
+     "ROUND(SUM(CASE WHEN Class='Rotorcraft' THEN PIC_Time ELSE 0 END),1), "
+     "ROUND(SUM(CASE WHEN Class='Rotorcraft' THEN SIC_Time ELSE 0 END),1) FROM Flights "
      "UNION ALL SELECT 4, 'Powered Lift', "
-     "ROUND(SUM(CASE WHEN Category_from_Aircraft='Powered Lift' THEN PIC_Time ELSE 0 END),1), "
-     "ROUND(SUM(CASE WHEN Category_from_Aircraft='Powered Lift' THEN SIC_Time ELSE 0 END),1) FROM Flights "
+     "ROUND(SUM(CASE WHEN Category='Powered Lift' THEN PIC_Time ELSE 0 END),1), "
+     "ROUND(SUM(CASE WHEN Category='Powered Lift' THEN SIC_Time ELSE 0 END),1) FROM Flights "
      "ORDER BY ord",
      "table", {"table.columns": [
          {"name": "ord", "enabled": False},

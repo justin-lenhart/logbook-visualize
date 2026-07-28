@@ -88,19 +88,19 @@ CARDS = [
 
     # -- pivots (career scope: all ops, legacy included) --
     ("Block by Category x Position",
-     "SELECT Category_from_Aircraft AS Category, "
+     "SELECT Category AS Category, "
      "ROUND(SUM(CASE WHEN Flight_Position='PIC' THEN Block_Time ELSE 0 END),1) AS PIC, "
      "ROUND(SUM(CASE WHEN Flight_Position='SIC' THEN Block_Time ELSE 0 END),1) AS SIC, "
      "ROUND(SUM(Block_Time),1) AS Total FROM Flights "
-     "WHERE Category_from_Aircraft IS NOT NULL GROUP BY 1 ORDER BY Total DESC",
+     "WHERE Category IS NOT NULL GROUP BY 1 ORDER BY Total DESC",
      "table", {}),
 
     ("Block by Class x Position",
-     "SELECT Class_from_Aircraft AS Class, "
+     "SELECT Class AS Class, "
      "ROUND(SUM(CASE WHEN Flight_Position='PIC' THEN Block_Time ELSE 0 END),1) AS PIC, "
      "ROUND(SUM(CASE WHEN Flight_Position='SIC' THEN Block_Time ELSE 0 END),1) AS SIC, "
      "ROUND(SUM(Block_Time),1) AS Total FROM Flights "
-     "WHERE Class_from_Aircraft IS NOT NULL GROUP BY 1 ORDER BY Total DESC",
+     "WHERE Class IS NOT NULL GROUP BY 1 ORDER BY Total DESC",
      "table", {}),
 
     ("Block by Engine x Position",
