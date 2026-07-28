@@ -12,6 +12,7 @@ are stable once created).
 |------|-----------|
 | Daily Ops (full dashboard) | http://100.78.241.102:3000/public/dashboard/ec389b81-d929-4043-8223-5194efbe6735 |
 | Application Reference (full dashboard) | http://100.78.241.102:3000/public/dashboard/cb050317-8fe5-4e01-9ea8-c4b47ce38c9c |
+| Trip Efficiency & Duty Legality (full dashboard) | http://100.78.241.102:3000/public/dashboard/4b676242-0cd5-4c08-a260-32d476e6d93e |
 | Monthly Block & Credit (Part 121) | http://100.78.241.102:3000/public/question/5c538a75-8644-406b-856d-bb5e3a567e10 |
 | Planned vs Actual Block by Month | http://100.78.241.102:3000/public/question/5832b6a8-3cbb-4398-9090-351e2f1b17fc |
 | Planned vs Actual Credit by Month | http://100.78.241.102:3000/public/question/e3ee1fed-dd81-46e5-abf0-c333a5321dda |

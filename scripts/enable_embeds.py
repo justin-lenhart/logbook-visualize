@@ -13,7 +13,8 @@ import os
 
 from mb import Metabase, BASE, REPO_ROOT
 
-DASHBOARDS = ["Daily Ops", "Application Reference"]
+DASHBOARDS = ["Daily Ops", "Application Reference",
+              "Trip Efficiency & Duty Legality"]
 CHART_CARDS = [
     "Monthly Block & Credit (Part 121)",
     "Planned vs Actual Block by Month",
