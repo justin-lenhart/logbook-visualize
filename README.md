@@ -4,17 +4,19 @@ Metabase dashboards over the self-hosted Grist pilot logbook on mintbox.
 Grist stays the single source of truth (pure backend); Metabase is a
 read-only, prettier frontend.
 
-## Status — BETA (2026-07-22)
+## Status — BETA (merged to `main` 2026-07-28)
 
-Functional and fully verified, not yet aesthetically polished. Active
-branch: **`metabase-build`** (local only); `main` is the initial stub and
-the target of the eventual merge once the user blesses the beta.
+Functional and fully verified, not yet aesthetically polished. Canonical
+on **`main`** as of 2026-07-28 (the `metabase-build` branch was merged in +
+pushed; kept for history). Still beta = aesthetic polish + schema gaps ahead,
+not correctness — all 58 cards verify against live Grist.
 
 This is the visualization half of the larger logbook system. The import
 half is **live as of 2026-07-23**: SkedPlus files dropped on the Mac
 auto-import into Grist via Syncthing + systemd watchers (see the `logbook`
-repo, branch `logbook-grist`; its `distribute`/`enhanced-map` branches are
-deprecated). Airtable is fully retired — frozen pre-cutover backup only.
+repo — canonical on `main`, Grist-based since the 2026-07-26 merge; its
+`logbook-grist`/`distribute`/`enhanced-map` branches are merged/deprecated).
+Airtable is fully retired — frozen pre-cutover backup only.
 This frontend is the remaining beta piece. System-level roadmap:
 `~/Developer/homelab/TODO.md` ("🎯 End state" section).
 
@@ -34,8 +36,9 @@ Toward 1.0 from here:
 Login: `whoostie@gmail.com`; the admin password lives on mintbox in the
 gitignored **`~/Developer/logbook-visualize/.env`** (`MB_ADMIN_PASSWORD`,
 chmod 600 — never committed, never printed). The landing page is the
-**Daily Ops** dashboard; **Application Reference** is the second dashboard
-(both in the *Logbook* collection).
+**Daily Ops** dashboard; **Application Reference** and **Trip Efficiency &
+Duty Legality** are the second and third dashboards (all in the *Logbook*
+collection).
 
 ## Architecture
 
@@ -64,8 +67,9 @@ Grist doc (live)                       Metabase container
 - Grist is **never written to** — no API writes, no schema changes, no
   helper columns were added.
 - Grist formula/rollup values (`Total_Landing`, `Actual_*`,
-  `Trip_Credit_Index`, `Flight_Month`, `Trip_Month`, `*_from_Aircraft`,
-  Aircraft hour rollups) are **materialized** in the SQLite file — all
+  `Trip_Credit_Index`, `Flight_Month`, `Trip_Month`, `Category`, `Class`,
+  `Engine_Category_from_Aircraft`, Aircraft hour rollups) are
+  **materialized** in the SQLite file — all
   cards use them as-is and never recompute them.
 
 ## Data semantics
@@ -80,12 +84,13 @@ Grist doc (live)                       Metabase container
 
 ## Dashboards
 
-Both dashboards open with a **"Last Update: HHMMZ | DD MMM YYYY"** tile
-(UTC) — the time `sync-grist.sh` last copied the Grist doc, stamped into
-`logbook.db` as the `sync_meta` table by the sync itself, so it reflects
-true data freshness (not page-load time).
+The **Daily Ops** and **Application Reference** dashboards open with a
+**"Last Update: HHMMZ | DD MMM YYYY"** tile (UTC) — the time
+`sync-grist.sh` last copied the Grist doc, stamped into `logbook.db` as the
+`sync_meta` table by the sync itself, so it reflects true data freshness
+(not page-load time).
 
-**Daily Ops** (homepage, 21 data cards + the Last Update tile): career tiles (total / PIC / SIC /
+**Daily Ops** (homepage, 22 data cards + the Last Update tile): career tiles (total / PIC / SIC /
 night / instrument / XC / credit / landings / flights — legacy included),
 a "Passengers Adventured" total, current-calendar-month tiles (auto-rolling `date('now','start of month')`
 SQL — equivalent to a relative-date filter, chosen so the cards stay
@@ -128,9 +133,9 @@ are deliberately unfiltered (always as-of-now).
 Every card is recomputed **independently from the live Grist REST API**
 (not the synced SQLite) with tolerance 0.1 — see
 [`verification-report.md`](verification-report.md). Current status:
-**32/32 cards match** (21 Daily Ops + 11 Application Reference).
-Stage-1 plumbing check: Metabase `Flights` row count == live Grist row
-count (134 at build time).
+**58/58 cards match** (22 Daily Ops + 11 Application Reference + 25 Trip
+Efficiency & Duty Legality). Stage-1 plumbing check: Metabase `Flights`
+row count == live Grist row count.
 
 Note: the static gh-pages app sheets were generated 2026-06-21; numbers
 here are live and legitimately differ where flights were logged since
@@ -152,7 +157,7 @@ to Grist). Schema additions that would close each gap are listed.
 | Milestone table (summary: 1000 FW-turbine-PIC, 1500 turbine, 1000 FW-turbine) | Milestone *targets* are business constants, not data; only the "have" side is derivable (built as headline scalars) | a small `Milestones` table (name, metric, target) |
 | SWA "Aircraft Category Totals" buckets (Jet/Turbine, Military Trainers, Turbo Prop ME, Light Piston, Heli/Power Lift) | Bucket membership is app-specific business logic (e.g. T-6B's *instruction received* counted as SIC) not encoded in any column | `Aircraft.SWA_Bucket` (choice) — plus a decision on the Instr-Recv-as-SIC rule |
 | Per-airframe merged rows (TH-57B/C, CRJ-200/700/900 on the pages) | Grist tracks them as separate Aircraft rows; the merge is page cosmetics. Dashboard shows them unmerged (honest, still verifiable) | none needed (could group by `FAA_Type` if merging is wanted) |
-| Exact Table A/B legality limits (duty legality dashboard) | §117.11/§117.13 limits key off LOCAL acclimated report time; `Airports.UTC_Offset` is 0.0 for all 20,576 rows, so local time is underivable — dashboard shows floor–ceiling utilization ranges instead | USER DECISION: populate `UTC_Offset` for the ~40 airports actually flown, or derive offsets from lat/lon (timezonefinder) — either unlocks exact per-duty limits |
+| Exact Table A/B legality limits (duty legality dashboard) | §117.11/§117.13 limits key off LOCAL acclimated report time. All times are stored in **UTC** and `Airports.UTC_Offset` is 0.0 for all 20,576 rows (never populated at the Airtable source; nothing pulls it at import), so local time is underivable — dashboard shows floor–ceiling utilization ranges instead. Note `Duty_Periods.Report_Airport` is also empty at source, but is derivable from each duty period's first-flight departure (54/70 resolve). | USER DECISION (shelved): only ~23 airports ever serve as report/release stations, all US — derive each one's IANA zone from lat/lon and compute the **DST-correct** offset at each report instant (a static per-airport scalar is DST-lossy; KPHX/KNYL are Arizona/no-DST). No Grist writes needed; materialize local times into the synced copy. |
 
 ## How to rebuild from scratch
 
@@ -164,8 +169,10 @@ docker compose up -d        # Metabase on http://100.78.241.102:3000
 python3 scripts/metabase_setup.py           # first-run setup + datasource
 python3 scripts/provision_daily_ops.py      # Daily Ops + homepage
 python3 scripts/provision_application_ref.py
-python3 scripts/verify_daily_ops.py         # both write verification-report.md
+python3 scripts/provision_duty_legality.py  # Trip Efficiency & Duty Legality
+python3 scripts/verify_daily_ops.py         # all three write verification-report.md
 python3 scripts/verify_application_ref.py
+python3 scripts/verify_duty_legality.py
 printf '%s\n' '*/15 * * * * /home/mint/Developer/logbook-visualize/sync-grist.sh # logbook-visualize sync' | crontab -
 ```
 
@@ -181,12 +188,15 @@ installs needed on mintbox.
 
 ## Grist embedding (live since 2026-07-23)
 
-Both dashboards are embedded into the Grist doc as pages, via Custom-URL
+The dashboards are embedded into the Grist doc as pages, via Custom-URL
 widgets pointing at the public links in [`embed-urls.md`](embed-urls.md)
 (with `#bordered=false&titled=false` for clean iframes):
 
 - Grist page **"Analytics (Metabase)"** → Daily Ops dashboard
 - Grist page **"Application Reference"** → Application Reference dashboard
+- Grist page **"Trip Efficiency & Duty Legality"** → third dashboard
+  (public link minted 2026-07-28; add the Grist Custom-URL page pointing
+  at it — same pattern as the other two)
 
 The embeds render the live dashboards — **any appearance/content edit made
 in Metabase auto-reflects in the Grist pages** (same URL, no re-embed
