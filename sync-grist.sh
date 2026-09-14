@@ -17,10 +17,10 @@
 # Cron: one line in mint's crontab runs this every 15 minutes.
 set -euo pipefail
 
-GRIST_DOC="/home/mint/docker/grist/docs/$(cat /home/mint/Developer/homelab/migration/grist-doc.txt).grist"
-DEST_DIR="/home/mint/docker/metabase/db"
+GRIST_DOC="/srv/data/appdata/grist/docs/$(cat /home/mint/Developer/homelab/migration/grist-doc.txt).grist"
+DEST_DIR="/srv/data/appdata/metabase/db"
 DEST="$DEST_DIR/logbook.db"
-LOG="/home/mint/docker/metabase/sync.log"
+LOG="/srv/data/appdata/metabase/sync.log"
 TMP="$DEST_DIR/.sync-tmp.db"
 
 mkdir -p "$DEST_DIR"
