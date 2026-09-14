@@ -44,7 +44,21 @@ DISCLAIMER = (
 # --- shared SQL fragments -------------------------------------------------
 ACT_FLT = ("Legacy_Summary = 0 AND Operation = 'Part 121' AND Deadhead = 0 "
            "AND In_Time IS NOT NULL")
-FDP_H = "(d.Release_Time - d.Report_Time) / 3600.0"
+
+
+def fdp_hours(a):
+    """FDP length (Release - Report) in hours for table alias ``a``.
+
+    SkedPlus stores one duty date, so a release after midnight can land at or
+    before report. A duty period is never >24h, so treat that case as a
+    next-day release (+86400s). Defensive: after the importer fix no such rows
+    remain, but this keeps a stray bad row from ever showing a negative FDP.
+    """
+    return (f"(CASE WHEN {a}.Release_Time > {a}.Report_Time THEN {a}.Release_Time "
+            f"ELSE {a}.Release_Time + 86400 END - {a}.Report_Time) / 3600.0")
+
+
+FDP_H = fdp_hours("d")
 
 # optional filter fragments (template tags)
 D_DATE = ("[[AND d.Duty_Date >= CAST(strftime('%s', {{start_date}}) AS INT)]] "
@@ -82,7 +96,7 @@ ROLL_BLOCK_DAY = (
 ROLL_FDP_DAY = (
     "WITH days(d) AS (SELECT DISTINCT date(Report_Time,'unixepoch') FROM Duty_Periods "
     "WHERE Status='Actual') "
-    "SELECT d AS Day, ROUND((SELECT COALESCE(SUM((p.Release_Time-p.Report_Time)/3600.0),0) "
+    f"SELECT d AS Day, ROUND((SELECT COALESCE(SUM({fdp_hours('p')}),0) "
     "FROM Duty_Periods p WHERE p.Status='Actual' "
     "AND p.Report_Time <  CAST(strftime('%s', d, '+1 day') AS INT) "
     "AND p.Report_Time >= CAST(strftime('%s', d, '+1 day') AS INT) - {W}*3600),1) "
@@ -96,7 +110,7 @@ def now_window_flight(hours):
 
 
 def now_window_fdp(hours):
-    return ("SELECT ROUND(COALESCE(SUM((d.Release_Time-d.Report_Time)/3600.0),0),1) "
+    return (f"SELECT ROUND(COALESCE(SUM({fdp_hours('d')}),0),1) "
             "FROM Duty_Periods d WHERE d.Status='Actual' "
             f"AND d.Report_Time <= CAST(strftime('%s','now') AS INT) "
             f"AND d.Report_Time >= CAST(strftime('%s','now') AS INT) - {hours}*3600")
