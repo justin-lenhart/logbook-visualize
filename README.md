@@ -92,7 +92,7 @@ The **Daily Ops** and **Application Reference** dashboards open with a
 
 **Daily Ops** (homepage, 22 data cards + the Last Update tile): career tiles (total / PIC / SIC /
 night / instrument / XC / credit / landings / flights — legacy included),
-a "Passengers Adventured" total, current-calendar-month tiles (auto-rolling `date('now','start of month')`
+a "Passengers Adventured" total (operated flights only — deadheads excluded), current-calendar-month tiles (auto-rolling `date('now','start of month')`
 SQL — equivalent to a relative-date filter, chosen so the cards stay
 native-SQL and verifiable), monthly block+credit trend (Part 121, legacy
 excluded), planned-vs-actual block and credit by month, avg Trip Credit
@@ -101,10 +101,11 @@ block-hour pivots.
 
 **Application Reference** (11 data cards + the Last Update tile): headline numbers (total, PIC,
 airplane, rotorcraft, fixed-wing turbine, FW-turbine PIC, all-turbine),
-per-aircraft totals with instructor time and last-flown, FAA 8710
+totals per FAA type (e.g. CL65 = CR2/CR5/CR7/CR9, subtypes flown listed) with
+instructor time and last-flown, FAA 8710
 hours-by-category matrix (incl. night T/O landings split PIC/SIC), class
 hours PIC/SIC (ASEL / AMEL / Helicopter / Powered Lift), and
-currency-by-recency block-hour buckets (0–12 / 13–24 / 25–36 / 37–48 /
+currency-by-recency block-hour buckets per FAA type (0–12 / 13–24 / 25–36 / 37–48 /
 49–60 / older months).
 
 **Trip Efficiency & Duty Legality** (25 data cards + a disclaimer card;

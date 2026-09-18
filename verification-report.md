@@ -1,4 +1,4 @@
-# Daily Ops verification — 2026-07-28 18:11 UTC
+# Daily Ops verification — 2026-09-18 20:46 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -29,7 +29,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **22/22 cards verified.**
 
-# Application Reference verification — 2026-07-28 18:11 UTC
+# Application Reference verification — 2026-09-18 20:46 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -42,14 +42,14 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 | App: Fixed-Wing Turbine | ✅ matches live Grist |
 | App: Fixed-Wing Turbine PIC | ✅ matches live Grist |
 | App: Turbine (All Categories) | ✅ matches live Grist |
-| Totals by Aircraft | ✅ matches live Grist |
+| Totals by FAA Type | ✅ matches live Grist |
 | FAA 8710 — Hours by Category | ✅ matches live Grist |
 | Class Hours (PIC / SIC) | ✅ matches live Grist |
 | Currency — Block Hours by Recency | ✅ matches live Grist |
 
 **11/11 cards verified.**
 
-# Trip Efficiency & Duty Legality verification — 2026-07-28 18:11 UTC
+# Trip Efficiency & Duty Legality verification — 2026-09-18 20:46 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 on now-anchored rolling windows). FDP = report→release (conservative proxy); Table A/B shown as floor/ceiling pending local-time data.
 
@@ -78,7 +78,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 o
 | Avg Block Variance per Trip (h) | ✅ matches live Grist |
 | Avg Credit Variance per Trip (h) | ✅ matches live Grist |
 | Credit & Block per TAFB Day by Month | ✅ matches live Grist |
-| Duty Period Legality Detail | ✅ 54 rows == live Grist |
-| Trip Efficiency Detail | ✅ 22 rows == live Grist |
+| Duty Period Legality Detail | ✅ 67 rows == live Grist |
+| Trip Efficiency Detail | ✅ 26 rows == live Grist |
 
 **25/25 cards verified.**

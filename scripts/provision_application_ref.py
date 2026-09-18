@@ -12,9 +12,18 @@ Usage: python3 scripts/provision_application_ref.py
 """
 from mb import Metabase
 from provision_daily_ops import (get_logbook_db_id, ensure_collection,
-                                 provision, TS_SQL)
+                                 provision, archive_cards_by_name, TS_SQL)
 
 DASHBOARD_NAME = "Application Reference"
+
+# Cards renamed in a later version; archived so they do not linger in the collection.
+RETIRED_CARDS = {"Totals by Aircraft"}
+
+# Applications ask for hours per FAA type (CL65, H1...), not per subtype
+# (CR2/CR5/CR7/CR9...). Subtypes flown are listed for reference.
+SUBTYPES_FLOWN = ("(SELECT GROUP_CONCAT(x, ', ') FROM (SELECT b.Aircraft AS x FROM Aircraft b "
+                  "WHERE b.FAA_Type = a.FAA_Type AND EXISTS "
+                  "(SELECT 1 FROM Flights g WHERE g.Aircraft = b.id) ORDER BY b.Aircraft))")
 
 AIRPLANE = "Category = 'Airplane'"
 FW_TURB = f"{AIRPLANE} AND Engine_Category_from_Aircraft = 'Turbine'"
@@ -73,8 +82,10 @@ CARDS = [
     ("App: Fixed-Wing Turbine PIC", f"SELECT ROUND(SUM(PIC_Time),1) FROM Flights WHERE {FW_TURB}", "scalar", {"scalar.suffix": " h"}),
     ("App: Turbine (All Categories)", "SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE Engine_Category_from_Aircraft = 'Turbine'", "scalar", {"scalar.suffix": " h"}),
 
-    ("Totals by Aircraft",
-     "SELECT a.Aircraft, a.Category, a.Class, a.Engine_Category AS Engine, "
+    ("Totals by FAA Type",
+     f"SELECT a.FAA_Type AS [FAA Type], {SUBTYPES_FLOWN} AS Subtypes, "
+     "MAX(a.Category) AS Category, MAX(a.Class) AS Class, "
+     "MAX(a.Engine_Category) AS Engine, "
      "COALESCE(ROUND(SUM(f.Block_Time),1),0) AS Total, "
      "COALESCE(ROUND(SUM(f.PIC_Time),1),0) AS PIC, "
      "COALESCE(ROUND(SUM(f.SIC_Time),1),0) AS SIC, "
@@ -86,7 +97,7 @@ CARDS = [
      "CAST(SUM(f.Total_Landing) AS INT) AS Ldgs, "
      "MAX(date(f.Flight_Date,'unixepoch')) AS [Last Flown] "
      "FROM Flights f JOIN Aircraft a ON f.Aircraft = a.id "
-     "GROUP BY a.id ORDER BY Total DESC",
+     "GROUP BY a.FAA_Type ORDER BY Total DESC",
      "table", {}),
 
     ("FAA 8710 — Hours by Category", FAA_8710_SQL, "table", HIDE_ORD),
@@ -114,16 +125,16 @@ CARDS = [
     # TOTAL row is part of the result set (UNION ALL) so it always renders
     # with the table; the hidden sortkey pins it to the top by default.
     ("Currency — Block Hours by Recency",
-     "SELECT a.Aircraft, " + _bucket_cols + ", "
+     "SELECT a.FAA_Type AS [FAA Type], " + _bucket_cols + ", "
      f"ROUND(SUM(CASE WHEN {MONTHS_AGO} > 60 THEN f.Block_Time ELSE 0 END),1) AS Older, "
      "MAX(f.Flight_Date) AS sortkey "
-     "FROM Flights f JOIN Aircraft a ON f.Aircraft = a.id GROUP BY a.id "
+     "FROM Flights f JOIN Aircraft a ON f.Aircraft = a.id GROUP BY a.FAA_Type "
      "UNION ALL SELECT 'TOTAL', " + _bucket_cols + ", "
      f"ROUND(SUM(CASE WHEN {MONTHS_AGO} > 60 THEN f.Block_Time ELSE 0 END),1), "
      "9999999999 FROM Flights f "
      "ORDER BY sortkey DESC",
      "table", {"table.columns": [
-         {"name": "Aircraft", "enabled": True},
+         {"name": "FAA Type", "enabled": True},
          {"name": "0-12 mo", "enabled": True},
          {"name": "13-24", "enabled": True},
          {"name": "25-36", "enabled": True},
@@ -141,7 +152,7 @@ LAYOUT = {
     "App: Fixed-Wing Turbine": (3, 0, 8, 3),
     "App: Fixed-Wing Turbine PIC": (3, 8, 8, 3),
     "App: Turbine (All Categories)": (3, 16, 8, 3),
-    "Totals by Aircraft": (6, 0, 24, 9),
+    "Totals by FAA Type": (6, 0, 24, 9),
     "FAA 8710 — Hours by Category": (15, 0, 12, 9),
     "Class Hours (PIC / SIC)": (15, 12, 12, 9),
     "Currency — Block Hours by Recency": (24, 0, 24, 9),
@@ -157,6 +168,7 @@ def main():
     mb.login()
     db_id = get_logbook_db_id(mb)
     coll_id = ensure_collection(mb)
+    archive_cards_by_name(mb, coll_id, RETIRED_CARDS)
     provision(mb, CARDS, LAYOUT, DASHBOARD_NAME, db_id, coll_id,
               dashcard_viz=DASHCARD_VIZ)
 

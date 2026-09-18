@@ -42,20 +42,23 @@ def build_expected():
     exp["App: Turbine (All Categories)"] = s(
         "Block_Time", lambda f: f.get("Engine_Category_from_Aircraft") == "Turbine")
 
-    # Totals by Aircraft (keyed by aircraft name)
+    # Totals by FAA Type (keyed by FAA type; subtypes flown listed)
     per = defaultdict(lambda: defaultdict(float))
     last = {}
+    flown = defaultdict(set)
     for f in flights:
         ref = f.get("Aircraft")
-        name = aircraft.get(ref, {}).get("Aircraft", "?")
+        name = aircraft.get(ref, {}).get("FAA_Type", "?")
+        flown[name].add(aircraft.get(ref, {}).get("Aircraft", "?"))
         for fld in ["Block_Time", "PIC_Time", "SIC_Time", "Dual_Given",
                     "Dual_Received", "Night_Time", "Instrument_Time",
                     "Cross_Country_Time", "Total_Landing"]:
             per[name][fld] += num(f.get(fld))
         if f.get("Flight_Date"):
             last[name] = max(last.get(name, 0), f["Flight_Date"])
-    exp["Totals by Aircraft"] = {
-        name: (aircraft_attr(aircraft, name, "Category"),
+    exp["Totals by FAA Type"] = {
+        name: (", ".join(sorted(flown[name])),
+               aircraft_attr(aircraft, name, "Category"),
                aircraft_attr(aircraft, name, "Class"),
                aircraft_attr(aircraft, name, "Engine_Category"),
                round(v["Block_Time"], 1), round(v["PIC_Time"], 1),
@@ -99,12 +102,12 @@ def build_expected():
         "Powered Lift": (s("PIC_Time", plift), s("SIC_Time", plift)),
     }
 
-    # Currency buckets per aircraft
+    # Currency buckets per FAA type
     cur = defaultdict(lambda: [0.0] * 6)
     for f in flights:
         if not f.get("Flight_Date"):
             continue
-        name = aircraft.get(f.get("Aircraft"), {}).get("Aircraft", "?")
+        name = aircraft.get(f.get("Aircraft"), {}).get("FAA_Type", "?")
         m = months_ago(f["Flight_Date"])
         idx = 0 if m <= 12 else 1 if m <= 24 else 2 if m <= 36 else \
             3 if m <= 48 else 4 if m <= 60 else 5
@@ -127,9 +130,10 @@ def _raw(table):
         return json.load(r)["records"]
 
 
-def aircraft_attr(aircraft, name, attr):
+def aircraft_attr(aircraft, faa_type, attr):
+    """Attribute of an FAA type (uniform across its subtypes)."""
     for a in aircraft.values():
-        if a.get("Aircraft") == name:
+        if a.get("FAA_Type") == faa_type:
             return a.get(attr)
     return None
 
@@ -179,7 +183,7 @@ def main():
             continue
         try:
             rows = mb.card_rows(cards[name])
-            if name in ("Totals by Aircraft", "Currency — Block Hours by Recency",
+            if name in ("Totals by FAA Type", "Currency — Block Hours by Recency",
                         "FAA 8710 — Hours by Category", "Class Hours (PIC / SIC)"):
                 # strip the hidden 'ord' first column where present
                 if name in ("FAA 8710 — Hours by Category", "Class Hours (PIC / SIC)"):

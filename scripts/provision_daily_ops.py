@@ -46,7 +46,10 @@ CARDS = [
     ("Career: Credit", "SELECT ROUND(SUM(Credit_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("Career: Landings", "SELECT CAST(SUM(Total_Landing) AS INT) FROM Flights", "scalar", {}),
     ("Career: Flights", "SELECT COUNT(*) FROM Flights", "scalar", {}),
-    ("Passengers Adventured", "SELECT CAST(SUM(Passengers) AS INT) FROM Flights", "scalar", {}),
+    # Only flights the user operated: deadhead passengers are not counted.
+    ("Passengers Adventured",
+     "SELECT CAST(COALESCE(SUM(Passengers),0) AS INT) FROM Flights WHERE COALESCE(Deadhead, 0) = 0",
+     "scalar", {}),
 
     # -- current calendar month (rolls over automatically; legacy excluded) --
     ("This Month: Block", f"SELECT ROUND(COALESCE(SUM(Block_Time),0),1) FROM Flights WHERE {CUR_MONTH}", "scalar", {"scalar.suffix": " h"}),

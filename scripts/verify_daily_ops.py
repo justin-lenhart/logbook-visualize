@@ -57,7 +57,8 @@ def build_expected():
     exp["Career: Credit"] = round(sum(num(f.get("Credit_Time")) for f in flights), 1)
     exp["Career: Landings"] = int(sum(num(f.get("Total_Landing")) for f in flights))
     exp["Career: Flights"] = len(flights)
-    exp["Passengers Adventured"] = int(sum(num(f.get("Passengers")) for f in flights))
+    exp["Passengers Adventured"] = int(sum(num(f.get("Passengers")) for f in flights
+                                           if not f.get("Deadhead")))
 
     # current-month tiles (legacy excluded)
     cur = [f for f in flights
