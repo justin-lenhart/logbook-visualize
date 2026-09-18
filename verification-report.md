@@ -1,4 +1,4 @@
-# Daily Ops verification — 2026-09-18 20:46 UTC
+# Daily Ops verification — 2026-09-18 23:56 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -21,15 +21,14 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 | Monthly Block & Credit (Part 121) | ✅ matches live Grist |
 | Planned vs Actual Block by Month | ✅ matches live Grist |
 | Planned vs Actual Credit by Month | ✅ matches live Grist |
-| Avg Trip Credit Index by Month | ✅ matches live Grist |
 | Avg TAFB by Month | ✅ matches live Grist |
 | Block by Category x Position | ✅ matches live Grist |
 | Block by Class x Position | ✅ matches live Grist |
 | Block by Engine x Position | ✅ matches live Grist |
 
-**22/22 cards verified.**
+**21/21 cards verified.**
 
-# Application Reference verification — 2026-09-18 20:46 UTC
+# Application Reference verification — 2026-09-18 23:56 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -49,7 +48,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **11/11 cards verified.**
 
-# Trip Efficiency & Duty Legality verification — 2026-09-18 20:46 UTC
+# Trip Efficiency & Duty Legality verification — 2026-09-18 23:56 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 on now-anchored rolling windows). FDP = report→release (conservative proxy); Table A/B shown as floor/ceiling pending local-time data.
 
@@ -73,7 +72,6 @@ Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 o
 | Rolling 168h FDP Hours by Day (cap 60h) | ✅ matches live Grist |
 | Avg Credit per TAFB Day | ✅ matches live Grist |
 | Avg Block per TAFB Day | ✅ matches live Grist |
-| Avg Trip Credit Index | ✅ matches live Grist |
 | Avg Days Between Trips | ✅ matches live Grist |
 | Avg Block Variance per Trip (h) | ✅ matches live Grist |
 | Avg Credit Variance per Trip (h) | ✅ matches live Grist |
@@ -81,4 +79,20 @@ Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 o
 | Duty Period Legality Detail | ✅ 67 rows == live Grist |
 | Trip Efficiency Detail | ✅ 26 rows == live Grist |
 
-**25/25 cards verified.**
+**24/24 cards verified.**
+
+# Pairing Productivity verification — 2026-09-18 23:56 UTC
+
+Recomputed independently from live Grist REST (26 trips, tolerance 0.011).
+
+| Card | Result |
+|------|--------|
+| PP: You vs SkyWest System | ✅ matches live Grist |
+| PP: Trips in View | ✅ matches live Grist |
+| PP: Credit in View | ✅ matches live Grist |
+| PP: Credit per Day by Month | ✅ matches live Grist |
+| PP: Credit per Duty Period by Month | ✅ matches live Grist |
+| PP: TAFB per Credit by Month | ✅ matches live Grist |
+| PP: Duty per Credit by Month | ✅ matches live Grist |
+
+**7/7 cards verified.**

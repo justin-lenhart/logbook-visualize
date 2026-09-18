@@ -14,12 +14,11 @@ import os
 from mb import Metabase, BASE, REPO_ROOT
 
 DASHBOARDS = ["Daily Ops", "Application Reference",
-              "Trip Efficiency & Duty Legality"]
+              "Trip Efficiency & Duty Legality", "Pairing Productivity"]
 CHART_CARDS = [
     "Monthly Block & Credit (Part 121)",
     "Planned vs Actual Block by Month",
     "Planned vs Actual Credit by Month",
-    "Avg Trip Credit Index by Month",
     "Avg TAFB by Month",
     "Block by Category x Position",
     "Block by Class x Position",

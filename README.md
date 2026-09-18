@@ -9,7 +9,7 @@ read-only, prettier frontend.
 Functional and fully verified, not yet aesthetically polished. Canonical
 on **`main`** as of 2026-07-28 (the `metabase-build` branch was merged in +
 pushed; kept for history). Still beta = aesthetic polish + schema gaps ahead,
-not correctness — all 58 cards verify against live Grist.
+not correctness — all 63 verified cards match live Grist.
 
 This is the visualization half of the larger logbook system. The import
 half is **live as of 2026-07-23**: SkedPlus files dropped on the Mac
@@ -36,9 +36,9 @@ Toward 1.0 from here:
 Login: `whoostie@gmail.com`; the admin password lives on mintbox in the
 gitignored **`~/Developer/logbook-visualize/.env`** (`MB_ADMIN_PASSWORD`,
 chmod 600 — never committed, never printed). The landing page is the
-**Daily Ops** dashboard; **Application Reference** and **Trip Efficiency &
-Duty Legality** are the second and third dashboards (all in the *Logbook*
-collection).
+**Daily Ops** dashboard; **Application Reference**, **Trip Efficiency &
+Duty Legality** and **Pairing Productivity** are the other dashboards (all in
+the *Logbook* collection).
 
 ## Architecture
 
@@ -50,7 +50,8 @@ Grist doc (live)                       Metabase container
         ▼  (cron, */15)                heap capped at 1 GB
 ~/docker/metabase/db/logbook.db  ──►   mounted read-only at /logbook
 (plain SQLite: Flights, Trips,         datasource "Logbook" (SQLite)
- Duty_Periods, Aircraft only)
+ Duty_Periods, Aircraft,
+ RSR_Metrics, Bid_Months only)
 ```
 
 - **`sync-grist.sh`** (cron `*/15`, single crontab line commented
@@ -59,7 +60,7 @@ Grist doc (live)                       Metabase container
   API** — the same mechanism as the `sqlite3` CLI's `.backup` command.
   (The `sqlite3` CLI is not installed on mintbox and installing needs
   sudo, so the script uses Python's stdlib `sqlite3.Connection.backup`.)
-  The copy is pruned to the four scope tables (Airports and all
+  The copy is pruned to the six scope tables (Airports and all
   `_grist_*`/summary tables are dropped **from the copy only**), then
   written into the destination with a second in-place backup so the
   file's inode never changes under the container's bind mount.
@@ -67,7 +68,7 @@ Grist doc (live)                       Metabase container
 - Grist is **never written to** — no API writes, no schema changes, no
   helper columns were added.
 - Grist formula/rollup values (`Total_Landing`, `Actual_*`,
-  `Trip_Credit_Index`, `Flight_Month`, `Trip_Month`, `Category`, `Class`,
+  `Flight_Month`, `Trip_Month`, `Category`, `Class`,
   `Engine_Category_from_Aircraft`, Aircraft hour rollups) are
   **materialized** in the SQLite file — all
   cards use them as-is and never recompute them.
@@ -90,13 +91,13 @@ The **Daily Ops** and **Application Reference** dashboards open with a
 `sync_meta` table by the sync itself, so it reflects true data freshness
 (not page-load time).
 
-**Daily Ops** (homepage, 22 data cards + the Last Update tile): career tiles (total / PIC / SIC /
+**Daily Ops** (homepage, 21 data cards + the Last Update tile): career tiles (total / PIC / SIC /
 night / instrument / XC / credit / landings / flights — legacy included),
 a "Passengers Adventured" total (operated flights only — deadheads excluded), current-calendar-month tiles (auto-rolling `date('now','start of month')`
 SQL — equivalent to a relative-date filter, chosen so the cards stay
 native-SQL and verifiable), monthly block+credit trend (Part 121, legacy
-excluded), planned-vs-actual block and credit by month, avg Trip Credit
-Index and avg TAFB by month, and Category / Class / Engine × Position
+excluded), planned-vs-actual block and credit by month, avg TAFB by
+month, and Category / Class / Engine × Position
 block-hour pivots.
 
 **Application Reference** (11 data cards + the Last Update tile): headline numbers (total, PIC,
@@ -108,7 +109,7 @@ hours PIC/SIC (ASEL / AMEL / Helicopter / Powered Lift), and
 currency-by-recency block-hour buckets per FAA type (0–12 / 13–24 / 25–36 / 37–48 /
 49–60 / older months).
 
-**Trip Efficiency & Duty Legality** (25 data cards + a disclaimer card;
+**Trip Efficiency & Duty Legality** (24 data cards + a disclaimer card;
 `scripts/provision_duty_legality.py`): ⚠️ **personal analytics, NOT a
 compliance system** — the dashboard carries a visible disclaimer; the
 company's official system is the sole legality authority. Part 117
@@ -121,7 +122,7 @@ all four §117.23 cumulative windows as progress bars (100 h/672 h,
 1,000 h/365 d, 60 h/168 h, 190 h/672 h) plus rolling-by-day trend lines
 with cap goal-lines. FDP = report→release (conservative proxy;
 report→last-block-in also shown per duty). Deadhead excluded from
-flight-time sums. Efficiency: credit/block per TAFB-day, TCI,
+flight-time sums. Efficiency: credit/block per TAFB-day,
 days-between-trips, planned-vs-actual variance, monthly trend, per-duty
 and per-trip detail tables. **Drill-down:** dashboard filter widgets
 (start/end date, trip, aircraft — typed values, not dropdowns, since
@@ -129,13 +130,32 @@ they're template-tag variables) and click-through from every summary
 scalar to its underlying detail table. Rolling-window "current" cards
 are deliberately unfiltered (always as-of-now).
 
+**Pairing Productivity** (10 data cards + a header card;
+`scripts/provision_pairing_productivity.py`): your flown trips against the
+SkyWest RSR **system-wide** averages in Grist `RSR_Metrics` (imported from the
+monthly RSR PDFs by the logbook repo's `import-rsr`). Eight RSR metrics, as
+totals over totals for the trips in view: credit and block per duty period and
+per day (higher is better); TAFB and duty per block and per credit (lower is
+better). "SkyWest system" is the RSR value for each trip's month and fleet
+bucket, averaged over the same trips; an **Index** column reads above 1.00
+when you beat the system (flipped for lower-is-better metrics). Fleet bucket =
+the RSR group (CRJ200 / CRJ550 / CRJ7&9) with the most non-deadhead block on
+the trip. Filters: **Line Type** (from the hand-kept Grist `Bid_Months` table;
+reserve months are paid by guarantee, so compare Line months), Fleet, Base.
+Cards: the comparison table, trips and credit in view, four monthly You-vs-
+system lines (credit/day, credit/DP, TAFB/credit, duty/credit), a monthly
+comparison table, per-trip detail, and the RSR reference table. It replaces
+the retired Trip Credit Index (credit / TAFB = 1 / (TAFB/credit)), which
+is removed from every dashboard.
+
 ## Verification
 
 Every card is recomputed **independently from the live Grist REST API**
 (not the synced SQLite) with tolerance 0.1 — see
 [`verification-report.md`](verification-report.md). Current status:
-**58/58 cards match** (22 Daily Ops + 11 Application Reference + 25 Trip
-Efficiency & Duty Legality). Stage-1 plumbing check: Metabase `Flights`
+**63/63 cards match** (21 Daily Ops + 11 Application Reference + 24 Trip
+Efficiency & Duty Legality + 7 Pairing Productivity; its three detail
+tables reuse the verified per-trip query). Stage-1 plumbing check: Metabase `Flights`
 row count == live Grist row count.
 
 Note: the static gh-pages app sheets were generated 2026-06-21; numbers
@@ -171,9 +191,11 @@ python3 scripts/metabase_setup.py           # first-run setup + datasource
 python3 scripts/provision_daily_ops.py      # Daily Ops + homepage
 python3 scripts/provision_application_ref.py
 python3 scripts/provision_duty_legality.py  # Trip Efficiency & Duty Legality
-python3 scripts/verify_daily_ops.py         # all three write verification-report.md
+python3 scripts/provision_pairing_productivity.py
+python3 scripts/verify_daily_ops.py         # all four write verification-report.md
 python3 scripts/verify_application_ref.py
 python3 scripts/verify_duty_legality.py
+python3 scripts/verify_pairing_productivity.py
 printf '%s\n' '*/15 * * * * /home/mint/Developer/logbook-visualize/sync-grist.sh # logbook-visualize sync' | crontab -
 ```
 
@@ -195,6 +217,7 @@ widgets pointing at the public links in [`embed-urls.md`](embed-urls.md)
 
 - Grist page **"Analytics (Metabase)"** → Daily Ops dashboard
 - Grist page **"Application Reference"** → Application Reference dashboard
+- Grist page **"Pairing Productivity"** → Pairing Productivity dashboard
 - Grist page **"Trip Efficiency & Duty Legality"** → third dashboard
   (public link minted 2026-07-28; add the Grist Custom-URL page pointing
   at it — same pattern as the other two)

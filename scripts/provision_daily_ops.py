@@ -6,7 +6,7 @@ Data semantics (see README):
 - Legacy_Summary=1 rows are pre-airline career aggregates: INCLUDED in career
   totals, EXCLUDED from monthly trends and current-month tiles.
 - Monthly airline-ops trend filters Operation='Part 121'.
-- Formula/rollup values (Total_Landing, Actual_*, Trip_Credit_Index,
+- Formula/rollup values (Total_Landing, Actual_Block, Actual_Legs,
   Flight_Month, Trip_Month, *_from_Aircraft) are materialized by Grist in the
   synced SQLite — used as-is, never recomputed.
 
@@ -15,6 +15,12 @@ Usage: python3 scripts/provision_daily_ops.py
 from mb import Metabase
 
 DASHBOARD_NAME = "Daily Ops"
+
+# Cards removed from the dashboard; archived so they do not linger in the
+# collection. Trip Credit Index (credit / TAFB) is retired: it is just
+# 1 / (TAFB/credit), which the Pairing Productivity dashboard compares with
+# the SkyWest RSR system averages.
+RETIRED_CARDS = {"Avg Trip Credit Index by Month"}
 
 CUR_MONTH = ("Flight_Date >= strftime('%s', date('now','start of month')) "
              "AND Flight_Date < strftime('%s', date('now','start of month','+1 month')) "
@@ -77,12 +83,6 @@ CARDS = [
      "GROUP BY Trip_Month ORDER BY Trip_Month",
      "bar", {"graph.dimensions": ["Month"], "graph.metrics": ["Planned", "Actual"]}),
 
-    ("Avg Trip Credit Index by Month",
-     "SELECT Trip_Month AS Month, ROUND(AVG(Trip_Credit_Index),3) AS [Avg TCI] "
-     "FROM Trips WHERE Trip_Credit_Index IS NOT NULL "
-     "GROUP BY Trip_Month ORDER BY Trip_Month",
-     "line", {"graph.dimensions": ["Month"], "graph.metrics": ["Avg TCI"]}),
-
     ("Avg TAFB by Month",
      "SELECT Trip_Month AS Month, ROUND(AVG(TAFB),1) AS [Avg TAFB (h)] "
      "FROM Trips WHERE TAFB IS NOT NULL "
@@ -133,8 +133,7 @@ for i, n in enumerate(["This Month: Block", "This Month: Credit",
 LAYOUT["Monthly Block & Credit (Part 121)"] = (12, 0, 24, 6)
 LAYOUT["Planned vs Actual Block by Month"] = (18, 0, 12, 6)
 LAYOUT["Planned vs Actual Credit by Month"] = (18, 12, 12, 6)
-LAYOUT["Avg Trip Credit Index by Month"] = (24, 0, 12, 6)
-LAYOUT["Avg TAFB by Month"] = (24, 12, 12, 6)
+LAYOUT["Avg TAFB by Month"] = (24, 0, 24, 6)
 LAYOUT["Block by Category x Position"] = (30, 0, 8, 6)
 LAYOUT["Block by Class x Position"] = (30, 8, 8, 6)
 LAYOUT["Block by Engine x Position"] = (30, 16, 8, 6)
@@ -207,6 +206,7 @@ def main():
     mb.login()
     db_id = get_logbook_db_id(mb)
     coll_id = ensure_collection(mb)
+    archive_cards_by_name(mb, coll_id, RETIRED_CARDS)
     dash_id, _ = provision(mb, CARDS, LAYOUT, DASHBOARD_NAME, db_id, coll_id,
                            dashcard_viz=DASHCARD_VIZ)
     # make Daily Ops the landing page

@@ -98,9 +98,6 @@ def build_expected():
     bpd = [num(t.get("Actual_Block")) / (t["TAFB"] / 24.0) for t in et]
     exp["Avg Credit per TAFB Day"] = round(sum(cpd) / len(cpd), 2)
     exp["Avg Block per TAFB Day"] = round(sum(bpd) / len(bpd), 2)
-    tci = [t["Trip_Credit_Index"] for t in et
-           if isinstance(t.get("Trip_Credit_Index"), (int, float))]
-    exp["Avg Trip Credit Index"] = round(sum(tci) / len(tci), 3)
 
     at = sorted([t for t in trips if t.get("Status") == "Actual"],
                 key=lambda t: t["Start_Date"])

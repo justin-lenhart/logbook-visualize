@@ -81,23 +81,19 @@ def build_expected():
 
     # trips planned vs actual
     pb, pc = defaultdict(lambda: [0.0, 0.0]), defaultdict(lambda: [0.0, 0.0])
-    tci, tafb = defaultdict(list), defaultdict(list)
+    tafb = defaultdict(list)
     for t in trips:
         m = t.get("Trip_Month")
         pb[m][0] += num(t.get("Planned_Block"))
         pb[m][1] += num(t.get("Actual_Block"))
         pc[m][0] += num(t.get("Planned_Credit"))
         pc[m][1] += num(t.get("Actual_Credit"))
-        if isinstance(t.get("Trip_Credit_Index"), (int, float)):
-            tci[m].append(t["Trip_Credit_Index"])
         if isinstance(t.get("TAFB"), (int, float)):
             tafb[m].append(t["TAFB"])
     exp["Planned vs Actual Block by Month"] = {
         m: (round(p, 1), round(a, 1)) for m, (p, a) in pb.items()}
     exp["Planned vs Actual Credit by Month"] = {
         m: (round(p, 1), round(a, 1)) for m, (p, a) in pc.items()}
-    exp["Avg Trip Credit Index by Month"] = {
-        m: (round(sum(v) / len(v), 3),) for m, v in tci.items()}
     exp["Avg TAFB by Month"] = {
         m: (round(sum(v) / len(v), 1),) for m, v in tafb.items()}
 

@@ -31,6 +31,10 @@ from provision_daily_ops import get_logbook_db_id, ensure_collection
 
 DASHBOARD_NAME = "Trip Efficiency & Duty Legality"
 
+# Cards removed from the dashboard; archived so they do not linger. Trip
+# Credit Index is retired (see provision_pairing_productivity.py).
+RETIRED_CARDS = {"Avg Trip Credit Index"}
+
 DISCLAIMER = (
     "## ⚠️ Personal analytics — NOT a compliance system\n\n"
     "Numbers here are curiosity/awareness metrics computed from my logbook "
@@ -197,10 +201,6 @@ CARDS = [
      f"SELECT ROUND(AVG(t.Actual_Block / (t.TAFB / 24.0)),2) {TRIP_EFF_BASE}",
      "scalar", {"scalar.suffix": " h/day"}, DT + ("trip",)),
 
-    ("Avg Trip Credit Index",
-     f"SELECT ROUND(AVG(t.Trip_Credit_Index),3) {TRIP_EFF_BASE}",
-     "scalar", {}, DT + ("trip",)),
-
     ("Avg Days Between Trips",
      "SELECT ROUND(AVG(gap),1) FROM (SELECT (t.Start_Date - LAG(t.End_Date) "
      "OVER (ORDER BY t.Start_Date)) / 86400.0 AS gap "
@@ -254,7 +254,6 @@ CARDS = [
      "t.Actual_Block AS [Block h], t.Actual_Credit AS [Credit h], "
      "ROUND(t.Actual_Credit / (t.TAFB / 24.0), 2) AS [Credit/day], "
      "ROUND(t.Actual_Block / (t.TAFB / 24.0), 2) AS [Block/day], "
-     "ROUND(t.Trip_Credit_Index, 3) AS TCI, "
      "ROUND(CASE WHEN t.Actual_Block > 0 THEN t.Actual_Credit / t.Actual_Block END, 2) AS [Credit:Block], "
      "CASE WHEN t.Planned_Block > 0 THEN ROUND(t.Actual_Block - t.Planned_Block, 2) END AS [Blk Var], "
      "CASE WHEN t.Planned_Credit > 0 THEN ROUND(t.Actual_Credit - t.Planned_Credit, 2) END AS [Cr Var], "
@@ -304,10 +303,9 @@ LAYOUT = {
     "Rolling 672h Flight Time by Day (cap 100h)": (18, 0, 12, 6),
     "Rolling 168h FDP Hours by Day (cap 60h)": (18, 12, 12, 6),
     "Duty Period Legality Detail": (24, 0, 24, 9),
-    "Avg Credit per TAFB Day": (33, 0, 6, 3),
-    "Avg Block per TAFB Day": (33, 6, 6, 3),
-    "Avg Trip Credit Index": (33, 12, 6, 3),
-    "Avg Days Between Trips": (33, 18, 6, 3),
+    "Avg Credit per TAFB Day": (33, 0, 8, 3),
+    "Avg Block per TAFB Day": (33, 8, 8, 3),
+    "Avg Days Between Trips": (33, 16, 8, 3),
     "Avg Block Variance per Trip (h)": (36, 0, 6, 3),
     "Avg Credit Variance per Trip (h)": (36, 6, 6, 3),
     "Credit & Block per TAFB Day by Month": (36, 12, 12, 6),
@@ -328,7 +326,6 @@ CLICK_TARGET = {
     "Rests Under 10h (count, §117.25(e))": "Duty Period Legality Detail",
     "Avg Credit per TAFB Day": "Trip Efficiency Detail",
     "Avg Block per TAFB Day": "Trip Efficiency Detail",
-    "Avg Trip Credit Index": "Trip Efficiency Detail",
     "Avg Days Between Trips": "Trip Efficiency Detail",
     "Avg Block Variance per Trip (h)": "Trip Efficiency Detail",
     "Avg Credit Variance per Trip (h)": "Trip Efficiency Detail",
@@ -363,7 +360,7 @@ def main():
 
     # archive existing same-name cards (idempotent re-run)
     items = mb.get(f"/api/collection/{coll_id}/items?models=card")
-    names = {c[0] for c in CARDS}
+    names = {c[0] for c in CARDS} | RETIRED_CARDS
     for it in items.get("data", []):
         if it["name"] in names:
             mb.put(f"/api/card/{it['id']}", {"archived": True})
