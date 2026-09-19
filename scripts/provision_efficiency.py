@@ -13,11 +13,11 @@ from provision_daily_ops import ensure_collection, get_logbook_db_id
 DASHBOARD_NAME = "Efficiency"
 
 HEADER = (
-    "**Efficiency Metrics: Flown trips vs SkyWest RSR averages.** "
-    "*SkyWest* metrics are system-wide RSR values averaged across "
-    "CRJ fleet. **Index = personal / system** Index > 1.00 for "
-    "'higher' metrics --> better than system. Inverse for 'lower' "
-    "metrics.")
+    "**Efficiency Metrics: flown trips vs SkyWest RSR averages.** "
+    "*SkyWest* values are the system-wide RSR values, averaged across the "
+    "CRJ200, CRJ550 and CRJ7&9 fleets. **Index = Personal ÷ SkyWest** for "
+    "'Higher' metrics and SkyWest ÷ Personal for 'Lower' metrics, so an "
+    "Index above 1.00 always means better than SkyWest.")
 
 # One row per flown trip: credit, block, TAFB, days, duty periods, duty hours.
 FLOWN = """
