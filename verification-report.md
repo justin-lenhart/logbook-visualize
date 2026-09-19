@@ -81,7 +81,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 o
 
 **24/24 cards verified.**
 
-# Efficiency verification — 2026-09-19 00:17 UTC
+# Efficiency verification — 2026-09-19 00:23 UTC
 
 Recomputed independently from live Grist REST (26 trips, tolerance 0.011).
 
