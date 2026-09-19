@@ -9,7 +9,7 @@ read-only, prettier frontend.
 Functional and fully verified, not yet aesthetically polished. Canonical
 on **`main`** as of 2026-07-28 (the `metabase-build` branch was merged in +
 pushed; kept for history). Still beta = aesthetic polish + schema gaps ahead,
-not correctness — all 63 verified cards match live Grist.
+not correctness — all 56 verified cards match live Grist.
 
 This is the visualization half of the larger logbook system. The import
 half is **live as of 2026-07-23**: SkedPlus files dropped on the Mac
@@ -51,7 +51,7 @@ Grist doc (live)                       Metabase container
 ~/docker/metabase/db/logbook.db  ──►   mounted read-only at /logbook
 (plain SQLite: Flights, Trips,         datasource "Logbook" (SQLite)
  Duty_Periods, Aircraft,
- RSR_Metrics, Bid_Months only)
+ RSR_Metrics only)
 ```
 
 - **`sync-grist.sh`** (cron `*/15`, single crontab line commented
@@ -60,7 +60,7 @@ Grist doc (live)                       Metabase container
   API** — the same mechanism as the `sqlite3` CLI's `.backup` command.
   (The `sqlite3` CLI is not installed on mintbox and installing needs
   sudo, so the script uses Python's stdlib `sqlite3.Connection.backup`.)
-  The copy is pruned to the six scope tables (Airports and all
+  The copy is pruned to the five scope tables (Airports and all
   `_grist_*`/summary tables are dropped **from the copy only**), then
   written into the destination with a second in-place backup so the
   file's inode never changes under the container's bind mount.
@@ -130,32 +130,20 @@ they're template-tag variables) and click-through from every summary
 scalar to its underlying detail table. Rolling-window "current" cards
 are deliberately unfiltered (always as-of-now).
 
-**Efficiency** (10 data cards + a header card;
-`scripts/provision_efficiency.py`): your flown trips against the
-SkyWest RSR **system-wide** averages in Grist `RSR_Metrics` (imported from the
-monthly RSR PDFs by the logbook repo's `import-rsr`). Eight RSR metrics, as
-totals over totals for the trips in view: credit and block per duty period and
-per day (higher is better); TAFB and duty per block and per credit (lower is
-better). "SkyWest system" is the RSR value for each trip's month and fleet
-bucket, averaged over the same trips; an **Index** column reads above 1.00
-when you beat the system (flipped for lower-is-better metrics). Fleet bucket =
-the RSR group (CRJ200 / CRJ550 / CRJ7&9) with the most non-deadhead block on
-the trip. Filters: **Line Type** (from the hand-kept Grist `Bid_Months` table;
-reserve months are paid by guarantee, so compare Line months), Fleet, Base.
-Cards: the comparison table, trips and credit in view, four monthly You-vs-
-system lines (credit/day, credit/DP, TAFB/credit, duty/credit), a monthly
-comparison table, per-trip detail, and the RSR reference table. It replaces
-the retired Trip Credit Index (credit / TAFB = 1 / (TAFB/credit)), which
-is removed from every dashboard.
+**Efficiency** (`scripts/provision_efficiency.py`): your flown trips vs
+SkyWest RSR averages for credit and block per duty period and per day, and TAFB
+and duty per block and per credit. For each month, SkyWest = the average of the
+CRJ200, CRJ550 and CRJ7&9 values in Grist `RSR_Metrics` (loaded by the logbook
+repo's `import-rsr`). Cards: an overall Personal vs SkyWest table with an
+Index, four monthly charts, a monthly table, per-trip detail and the RSR values.
 
 ## Verification
 
 Every card is recomputed **independently from the live Grist REST API**
 (not the synced SQLite) with tolerance 0.1 — see
 [`verification-report.md`](verification-report.md). Current status:
-**63/63 cards match** (21 Daily Ops + 11 Application Reference + 24 Trip
-Efficiency & Duty Legality + 7 Efficiency; its three detail
-tables reuse the verified per-trip query). Stage-1 plumbing check: Metabase `Flights`
+**56/56 cards match** (21 Daily Ops + 11 Application Reference + 24 Trip
+Efficiency & Duty Legality). The Efficiency dashboard has no verify script. Stage-1 plumbing check: Metabase `Flights`
 row count == live Grist row count.
 
 Note: the static gh-pages app sheets were generated 2026-06-21; numbers
@@ -195,7 +183,6 @@ python3 scripts/provision_efficiency.py
 python3 scripts/verify_daily_ops.py         # all four write verification-report.md
 python3 scripts/verify_application_ref.py
 python3 scripts/verify_duty_legality.py
-python3 scripts/verify_efficiency.py
 printf '%s\n' '*/15 * * * * /home/mint/Developer/logbook-visualize/sync-grist.sh # logbook-visualize sync' | crontab -
 ```
 

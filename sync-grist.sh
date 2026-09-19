@@ -12,8 +12,8 @@
 # bind-mounted view of the file never goes stale.
 #
 # Scope tables kept: Flights, Trips, Duty_Periods, Aircraft, RSR_Metrics (SkyWest
-# RSR system averages) and Bid_Months (Line/Reserve label per month). Airports and
-# all Grist metadata/summary tables are dropped from the copy — never the source.
+# RSR averages). Airports and all Grist metadata/summary tables are dropped from
+# the copy — never the source.
 #
 # Cron: one line in mint's crontab runs this every 15 minutes.
 set -euo pipefail
@@ -34,7 +34,7 @@ python3 - "$GRIST_DOC" "$TMP" "$DEST" <<'PYEOF' >> "$LOG" 2>&1
 import sqlite3, sys, os, time
 
 src_path, tmp_path, dest_path = sys.argv[1], sys.argv[2], sys.argv[3]
-KEEP = {"Flights", "Trips", "Duty_Periods", "Aircraft", "RSR_Metrics", "Bid_Months"}
+KEEP = {"Flights", "Trips", "Duty_Periods", "Aircraft", "RSR_Metrics"}
 stamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
 try:

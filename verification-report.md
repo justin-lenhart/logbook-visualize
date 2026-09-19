@@ -80,19 +80,3 @@ Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 o
 | Trip Efficiency Detail | ✅ 26 rows == live Grist |
 
 **24/24 cards verified.**
-
-# Efficiency verification — 2026-09-19 00:23 UTC
-
-Recomputed independently from live Grist REST (26 trips, tolerance 0.011).
-
-| Card | Result |
-|------|--------|
-| Personal vs SkyWest | ✅ matches live Grist |
-| Trips in View | ✅ matches live Grist |
-| Credit in View | ✅ matches live Grist |
-| Credit per Day by Month | ✅ matches live Grist |
-| Credit per Duty Period by Month | ✅ matches live Grist |
-| TAFB per Credit by Month | ✅ matches live Grist |
-| Duty per Credit by Month | ✅ matches live Grist |
-
-**7/7 cards verified.**
