@@ -134,17 +134,17 @@ LINE = {"graph.dimensions": ["Month"], "graph.metrics": ["You", "SkyWest system"
 
 # (name, sql, display, viz, template tags)
 CARDS = [
-    ("PP: You vs SkyWest System", you_vs_system_sql(), "table", {}, TRIP_TAGS),
-    ("PP: Trips in View", f"{TRIPS_CTE}SELECT COUNT(*) FROM fr", "scalar", {}, TRIP_TAGS),
-    ("PP: Credit in View", f"{TRIPS_CTE}SELECT ROUND(SUM(cr), 1) FROM fr", "scalar",
+    (Personal vs SkyWest", you_vs_system_sql(), "table", {}, TRIP_TAGS),
+    ("Trips in View", f"{TRIPS_CTE}SELECT COUNT(*) FROM fr", "scalar", {}, TRIP_TAGS),
+    ("Credit in View", f"{TRIPS_CTE}SELECT ROUND(SUM(cr), 1) FROM fr", "scalar",
      {"scalar.suffix": " h"}, TRIP_TAGS),
-    ("PP: Credit per Day by Month", monthly_chart_sql(1), "line", LINE, TRIP_TAGS),
-    ("PP: Credit per Duty Period by Month", monthly_chart_sql(0), "line", LINE, TRIP_TAGS),
-    ("PP: TAFB per Credit by Month", monthly_chart_sql(5), "line", LINE, TRIP_TAGS),
-    ("PP: Duty per Credit by Month", monthly_chart_sql(7), "line", LINE, TRIP_TAGS),
-    ("PP: Monthly Comparison", monthly_table_sql(), "table", {}, TRIP_TAGS),
-    ("PP: Trip Detail", TRIP_DETAIL_SQL, "table", {}, TRIP_TAGS),
-    ("PP: SkyWest System RSR by Month", RSR_REFERENCE_SQL, "table", {}, ("fleet",)),
+    ("Credit per Day by Month", monthly_chart_sql(1), "line", LINE, TRIP_TAGS),
+    ("Credit per Duty Period by Month", monthly_chart_sql(0), "line", LINE, TRIP_TAGS),
+    ("TAFB per Credit by Month", monthly_chart_sql(5), "line", LINE, TRIP_TAGS),
+    ("Duty per Credit by Month", monthly_chart_sql(7), "line", LINE, TRIP_TAGS),
+    ("Monthly Comparison", monthly_table_sql(), "table", {}, TRIP_TAGS),
+    ("Trip Detail", TRIP_DETAIL_SQL, "table", {}, TRIP_TAGS),
+    ("SkyWest RSR by Month", RSR_REFERENCE_SQL, "table", {}, ("fleet",)),
 ]
 
 TAG_DEFS = {"line_type": "Line Type", "fleet": "Fleet", "base": "Base"}
@@ -179,28 +179,24 @@ def parameters(base_card_id):
 PARAM_FOR_TAG = {"line_type": "p-linetype", "fleet": "p-fleet", "base": "p-base"}
 
 HEADER = (
-    "**Pairing Productivity: your flown trips vs SkyWest RSR system averages.** "
-    "Ratios are totals over totals for the trips in view. *SkyWest system* is the "
-    "system-wide RSR value for each trip's month and fleet, averaged over the same "
-    "trips. **Index above 1.00 = better than the system** (flipped for the "
-    "lower-is-better metrics). Time metrics are decimal hours. Fleet is the one with "
-    "the most block on the trip (700/900 are one RSR bucket). Reserve months "
-    "(Grist *Bid_Months*) are paid by guarantee, so set **Line Type = Line** for a "
-    "like-for-like comparison. The RSR describes bid pairings, while your trips "
-    "include reassignments.")
+    "**Efficiency Metrics: Flown trips vs SkyWest RSR averages.** "
+    ".*SkyWest* metrics are system-wide RSR values averaged across "
+    "CRJ fleet. **Index = personal / system** Index > 1.00 for "
+    "'higher' metrics --> better than system. Inverse for 'lower'"
+    "metrics.")
 
 # (row, col, size_x, size_y); the header text card takes rows 0-4
 LAYOUT = {
-    "PP: You vs SkyWest System": (5, 0, 16, 9),
-    "PP: Trips in View": (5, 16, 8, 4),
-    "PP: Credit in View": (9, 16, 8, 5),
-    "PP: Credit per Day by Month": (14, 0, 12, 6),
-    "PP: Credit per Duty Period by Month": (14, 12, 12, 6),
-    "PP: TAFB per Credit by Month": (20, 0, 12, 6),
-    "PP: Duty per Credit by Month": (20, 12, 12, 6),
-    "PP: Monthly Comparison": (26, 0, 24, 7),
-    "PP: Trip Detail": (33, 0, 24, 9),
-    "PP: SkyWest System RSR by Month": (42, 0, 24, 8),
+    "Personal vs SkyWest ": (5, 0, 16, 9),
+    "Trips in View": (5, 16, 8, 4),
+    "Credit in View": (9, 16, 8, 5),
+    "Credit per Day by Month": (14, 0, 12, 6),
+    "Credit per Duty Period by Month": (14, 12, 12, 6),
+    "TAFB per Credit by Month": (20, 0, 12, 6),
+    "Duty per Credit by Month": (20, 12, 12, 6),
+    "Monthly Comparison": (26, 0, 24, 7),
+    "Trip Detail": (33, 0, 24, 9),
+    "SkyWest RSR by Month": (42, 0, 24, 8),
 }
 
 
