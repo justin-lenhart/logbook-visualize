@@ -11,9 +11,10 @@ Definitions (match the RSR report):
 - Fleet = the RSR bucket (CRJ200 / CRJ550 / CRJ7&9) with the most
   non-deadhead block on the trip. 700 and 900 share one RSR bucket.
 - Line type comes from the hand-kept Grist table Bid_Months (Line / Reserve).
-- System = the RSR system value for each trip's month and fleet, averaged
-  over the trips in view (trip-weighted), so it always describes the same
-  months and fleets as "You".
+- SkyWest = the CRJ fleet-wide value per month: the plain average of the
+  CRJ200, CRJ550 and CRJ7&9 RSR values (the RSR publishes no All-CRJ ratios).
+  Picking a Fleet filter narrows it to that fleet. Overall figures average
+  those monthly values across the months in view.
 - Index > 1.00 always means better than the system: You / System for
   higher-is-better metrics, System / You for lower-is-better ones.
 
@@ -53,7 +54,7 @@ METRICS = [
     ("Duty / block", "Lower", "SUM(duty) / SUM(bk)", "Duty_per_Bk"),
     ("Duty / credit", "Lower", "SUM(duty) / SUM(cr)", "Duty_per_Cr"),
 ]
-RSR_COLS = ", ".join(f"r.{m[3]}" for m in METRICS)
+SYS_COLS = ", ".join(f"AVG({m[3]}) AS {m[3]}" for m in METRICS)
 
 TRIPS_CTE = f"""WITH fl AS (
   SELECT f.Trips AS trip, {FLEET_CASE} AS fleet, SUM(f.Block_Time) AS blk
@@ -86,17 +87,23 @@ f AS (
   [[AND line_type = {{{{line_type}}}}]]
   [[AND fleet = {{{{fleet}}}}]]
   [[AND base = {{{{base}}}}]]),
+sys AS (
+  SELECT Data_Month AS sys_month, {SYS_COLS}
+  FROM RSR_Metrics
+  WHERE Scope = 'SYS' AND Fleet IN ('CRJ200', 'CRJ550', 'CRJ7&9')
+  [[AND Fleet = {{{{fleet}}}}]]
+  GROUP BY Data_Month),
 fr AS (
-  SELECT f.*, {RSR_COLS}
-  FROM f LEFT JOIN RSR_Metrics r
-    ON r.Scope = 'SYS' AND r.Fleet = f.fleet AND r.Data_Month = f.month)
+  SELECT f.*, sys.* FROM f LEFT JOIN sys ON sys.sys_month = f.month)
 """
 TRIP_TAGS = ("line_type", "fleet", "base")
 
 
 def you_vs_system_sql():
+    # SkyWest side: average of the monthly fleet-wide values for the months in view
     agg = ", ".join(
-        [f"{expr} AS y{i}, AVG({col}) AS s{i}"
+        [f"{expr} AS y{i}, (SELECT AVG({col}) FROM sys "
+         f"WHERE sys_month IN (SELECT month FROM f)) AS s{i}"
          for i, (_l, _b, expr, col) in enumerate(METRICS)])
     rows = []
     for i, (label, better, _e, _c) in enumerate(METRICS):

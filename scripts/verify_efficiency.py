@@ -18,6 +18,7 @@ from verify_daily_ops import GRIST_DOC, GRIST_URL, grist_key, grist_records, num
 TOL = 0.011
 SECTION = "# Efficiency verification"
 FLEET = {"CR2": "CRJ200", "CR5": "CRJ550", "CR7": "CRJ7&9", "CR9": "CRJ7&9"}
+CRJ_FLEETS = {"CRJ200", "CRJ550", "CRJ7&9"}
 
 
 def build_trips():
@@ -33,8 +34,14 @@ def build_trips():
             dps[d["Trips"]] += 1
             duty[d["Trips"]] += (d["Release_Time"] - d["Report_Time"]) / 3600.0
     line = {b["Month"]: b["Line_Type"] for b in grist_records("Bid_Months")}
-    rsr = {(r["Fleet"], r["Data_Month"]): r for r in grist_records("RSR_Metrics")
-           if r.get("Scope") == "SYS"}
+    # SkyWest side: plain average of the three CRJ fleets per month
+    by_month = defaultdict(list)
+    for r in grist_records("RSR_Metrics"):
+        if r.get("Scope") == "SYS" and r.get("Fleet") in CRJ_FLEETS:
+            by_month[r["Data_Month"]].append(r)
+    rsr = {m: {col: mean([r[col] for r in rows if isinstance(r.get(col), (int, float))])
+               for _l, _b, _e, col in METRICS}
+           for m, rows in by_month.items()}
     trips = []
     for t in grist_records_with_id("Trips"):
         if t.get("Status") != "Actual" or not num(t.get("TAFB")) or not dps[t["id"]]:
@@ -47,7 +54,7 @@ def build_trips():
             "cr": num(t.get("Actual_Credit")), "bk": num(t.get("Actual_Block")),
             "tafb": num(t.get("TAFB")), "days": num(t.get("Trip_Length")),
             "dps": dps[t["id"]], "duty": duty[t["id"]],
-            "rsr": rsr.get((fleet, t["Trip_Month"]), {}),
+            "rsr": rsr.get(t["Trip_Month"], {}),
         })
     return trips
 
@@ -73,7 +80,13 @@ def ratio(trips, expr):
 
 
 def system(trips, col):
-    vals = [t["rsr"][col] for t in trips if isinstance(t["rsr"].get(col), (int, float))]
+    """Average of the monthly fleet-wide values over the distinct months in view."""
+    per_month = {t["month"]: t["rsr"].get(col) for t in trips}
+    return mean(list(per_month.values()))
+
+
+def mean(values):
+    vals = [v for v in values if isinstance(v, (int, float))]
     return sum(vals) / len(vals) if vals else None
 
 
