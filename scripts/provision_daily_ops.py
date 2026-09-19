@@ -18,7 +18,7 @@ DASHBOARD_NAME = "Daily Ops"
 
 # Cards removed from the dashboard; archived so they do not linger in the
 # collection. Trip Credit Index (credit / TAFB) is retired: it is just
-# 1 / (TAFB/credit), which the Pairing Productivity dashboard compares with
+# 1 / (TAFB/credit), which the Efficiency dashboard compares with
 # the SkyWest RSR system averages.
 RETIRED_CARDS = {"Avg Trip Credit Index by Month"}
 

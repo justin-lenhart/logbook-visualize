@@ -32,7 +32,7 @@ from provision_daily_ops import get_logbook_db_id, ensure_collection
 DASHBOARD_NAME = "Trip Efficiency & Duty Legality"
 
 # Cards removed from the dashboard; archived so they do not linger. Trip
-# Credit Index is retired (see provision_pairing_productivity.py).
+# Credit Index is retired (see provision_efficiency.py).
 RETIRED_CARDS = {"Avg Trip Credit Index"}
 
 DISCLAIMER = (

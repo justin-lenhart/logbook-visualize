@@ -1,9 +1,9 @@
-"""Stage-2 verification: recompute the Pairing Productivity numbers
+"""Stage-2 verification: recompute the Efficiency dashboard numbers
 INDEPENDENTLY from the LIVE Grist REST API (not the synced SQLite) and compare
 them with what each Metabase card returns (unfiltered view). Tolerance 0.011
 (cards round to 2 decimals). Writes its own section of verification-report.md.
 
-Usage: python3 scripts/verify_pairing_productivity.py
+Usage: python3 scripts/verify_efficiency.py
 """
 import datetime
 import json
@@ -12,11 +12,11 @@ import urllib.request
 from collections import Counter, defaultdict
 
 from mb import Metabase, REPO_ROOT
-from provision_pairing_productivity import METRICS
+from provision_efficiency import METRICS
 from verify_daily_ops import GRIST_DOC, GRIST_URL, grist_key, grist_records, num
 
 TOL = 0.011
-SECTION = "# Pairing Productivity verification"
+SECTION = "# Efficiency verification"
 FLEET = {"CR2": "CRJ200", "CR5": "CRJ550", "CR7": "CRJ7&9", "CR9": "CRJ7&9"}
 
 
@@ -84,16 +84,16 @@ def build_expected(trips):
         you, sys_ = ratio(trips, expr), system(trips, col)
         idx = (you / sys_ if better == "Higher" else sys_ / you) if you and sys_ else None
         rows[label] = (you, sys_, idx)
-    exp["PP: You vs SkyWest System"] = rows
-    exp["PP: Trips in View"] = len(trips)
-    exp["PP: Credit in View"] = sum(t["cr"] for t in trips)
+    exp["Personal vs SkyWest"] = rows
+    exp["Trips in View"] = len(trips)
+    exp["Credit in View"] = sum(t["cr"] for t in trips)
     by_month = defaultdict(list)
     for t in trips:
         by_month[t["month"]].append(t)
-    for card, i in [("PP: Credit per Day by Month", 1),
-                    ("PP: Credit per Duty Period by Month", 0),
-                    ("PP: TAFB per Credit by Month", 5),
-                    ("PP: Duty per Credit by Month", 7)]:
+    for card, i in [("Credit per Day by Month", 1),
+                    ("Credit per Duty Period by Month", 0),
+                    ("TAFB per Credit by Month", 5),
+                    ("Duty per Credit by Month", 7)]:
         _l, _b, expr, col = METRICS[i]
         exp[card] = {m: (ratio(ts, expr), system(ts, col)) for m, ts in by_month.items()}
     return exp
@@ -140,7 +140,7 @@ def main():
         try:
             rows = mb.card_rows(cards[name])
             # the comparison table carries a 'Better' column after the key
-            diffs = compare(exp, rows, skip_cols=1 if name == "PP: You vs SkyWest System" else 0)
+            diffs = compare(exp, rows, skip_cols=1 if name == "Personal vs SkyWest" else 0)
         except Exception as e:  # missing card or query failure
             diffs = [f"{type(e).__name__}: {e}"]
         if diffs:

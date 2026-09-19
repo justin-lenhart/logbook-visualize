@@ -1,5 +1,5 @@
-"""Stage-2 provisioning: the "Pairing Productivity" dashboard — the user's
-flown trips vs SkyWest RSR system-wide averages (Grist RSR_Metrics).
+"""Stage-2 provisioning: the "Efficiency" dashboard — the user's flown trips
+vs SkyWest RSR system-wide averages (Grist RSR_Metrics).
 
 Definitions (match the RSR report):
 - Every ratio is a SUM over SUM across the trips in view — never an average of
@@ -18,14 +18,26 @@ Definitions (match the RSR report):
   higher-is-better metrics, System / You for lower-is-better ones.
 
 Idempotent: archives same-name cards, reuses the dashboard (and its public
-link). Usage: python3 scripts/provision_pairing_productivity.py
+link). Usage: python3 scripts/provision_efficiency.py
 """
 import uuid
 
 from mb import Metabase
 from provision_daily_ops import ensure_collection, get_logbook_db_id
 
-DASHBOARD_NAME = "Pairing Productivity"
+DASHBOARD_NAME = "Efficiency"
+# Earlier name of this dashboard: renamed in place so its id and public link
+# (the Grist embed) survive.
+FORMER_DASHBOARD_NAMES = {"Pairing Productivity"}
+
+# Card names from the earlier version; archived so they do not linger.
+RETIRED_CARDS = {
+    "PP: You vs SkyWest System", "PP: Trips in View", "PP: Credit in View",
+    "PP: Credit per Day by Month", "PP: Credit per Duty Period by Month",
+    "PP: TAFB per Credit by Month", "PP: Duty per Credit by Month",
+    "PP: Monthly Comparison", "PP: Trip Detail",
+    "PP: SkyWest System RSR by Month", "PP: Base Values",
+}
 
 FLEET_CASE = ("CASE a.Aircraft WHEN 'CR2' THEN 'CRJ200' WHEN 'CR5' THEN 'CRJ550' "
               "WHEN 'CR7' THEN 'CRJ7&9' WHEN 'CR9' THEN 'CRJ7&9' END")
@@ -134,7 +146,7 @@ LINE = {"graph.dimensions": ["Month"], "graph.metrics": ["You", "SkyWest system"
 
 # (name, sql, display, viz, template tags)
 CARDS = [
-    (Personal vs SkyWest", you_vs_system_sql(), "table", {}, TRIP_TAGS),
+    ("Personal vs SkyWest", you_vs_system_sql(), "table", {}, TRIP_TAGS),
     ("Trips in View", f"{TRIPS_CTE}SELECT COUNT(*) FROM fr", "scalar", {}, TRIP_TAGS),
     ("Credit in View", f"{TRIPS_CTE}SELECT ROUND(SUM(cr), 1) FROM fr", "scalar",
      {"scalar.suffix": " h"}, TRIP_TAGS),
@@ -151,7 +163,7 @@ TAG_DEFS = {"line_type": "Line Type", "fleet": "Fleet", "base": "Base"}
 
 # Hidden helper card: feeds the Base dropdown from the trips themselves, so a
 # new base appears without editing this script. Not placed on the dashboard.
-BASE_VALUES_CARD = ("PP: Base Values",
+BASE_VALUES_CARD = ("Base Filter Values",
                     "SELECT DISTINCT Base FROM Trips WHERE Base IS NOT NULL "
                     "AND Base != '' ORDER BY Base")
 
@@ -180,14 +192,14 @@ PARAM_FOR_TAG = {"line_type": "p-linetype", "fleet": "p-fleet", "base": "p-base"
 
 HEADER = (
     "**Efficiency Metrics: Flown trips vs SkyWest RSR averages.** "
-    ".*SkyWest* metrics are system-wide RSR values averaged across "
+    "*SkyWest* metrics are system-wide RSR values averaged across "
     "CRJ fleet. **Index = personal / system** Index > 1.00 for "
-    "'higher' metrics --> better than system. Inverse for 'lower'"
+    "'higher' metrics --> better than system. Inverse for 'lower' "
     "metrics.")
 
 # (row, col, size_x, size_y); the header text card takes rows 0-4
 LAYOUT = {
-    "Personal vs SkyWest ": (5, 0, 16, 9),
+    "Personal vs SkyWest": (5, 0, 16, 9),
     "Trips in View": (5, 16, 8, 4),
     "Credit in View": (9, 16, 8, 5),
     "Credit per Day by Month": (14, 0, 12, 6),
@@ -223,15 +235,15 @@ def main():
     db_id = get_logbook_db_id(mb)
     coll_id = ensure_collection(mb)
 
-    names = {c[0] for c in CARDS} | {BASE_VALUES_CARD[0]}
+    names = {c[0] for c in CARDS} | {BASE_VALUES_CARD[0]} | RETIRED_CARDS
     for it in mb.get(f"/api/collection/{coll_id}/items?models=card").get("data", []):
         if it["name"] in names:
             mb.put(f"/api/card/{it['id']}", {"archived": True})
 
     dashes = mb.get("/api/dashboard")
     dl = dashes if isinstance(dashes, list) else dashes.get("data", [])
-    dash_id = next((d["id"] for d in dl
-                    if d["name"] == DASHBOARD_NAME and not d.get("archived")), None)
+    dash_id = next((d["id"] for d in dl if not d.get("archived") and
+                    d["name"] in {DASHBOARD_NAME} | FORMER_DASHBOARD_NAMES), None)
     if dash_id is None:
         dash_id = mb.post("/api/dashboard", {
             "name": DASHBOARD_NAME, "collection_id": coll_id})["id"]
@@ -260,13 +272,12 @@ def main():
                 {"parameter_id": PARAM_FOR_TAG[t], "card_id": made[name],
                  "target": ["variable", ["template-tag", t]]}
                 for t in tags],
-            # card names carry a "PP: " prefix to stay unique in the shared
-            # collection; the dashboard shows them without it
-            "visualization_settings": {"card.title": name.removeprefix("PP: ")},
+            "visualization_settings": {},
         })
 
     mb.put(f"/api/dashboard/{dash_id}",
-           {"parameters": parameters(base_card), "dashcards": dashcards})
+           {"name": DASHBOARD_NAME, "parameters": parameters(base_card),
+            "dashcards": dashcards})
     print(f"dashboard '{DASHBOARD_NAME}' (id {dash_id}): "
           f"{len(dashcards)} dashcards (incl. header), 3 dropdown filters")
 

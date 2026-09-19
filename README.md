@@ -37,7 +37,7 @@ Login: `whoostie@gmail.com`; the admin password lives on mintbox in the
 gitignored **`~/Developer/logbook-visualize/.env`** (`MB_ADMIN_PASSWORD`,
 chmod 600 — never committed, never printed). The landing page is the
 **Daily Ops** dashboard; **Application Reference**, **Trip Efficiency &
-Duty Legality** and **Pairing Productivity** are the other dashboards (all in
+Duty Legality** and **Efficiency** are the other dashboards (all in
 the *Logbook* collection).
 
 ## Architecture
@@ -130,8 +130,8 @@ they're template-tag variables) and click-through from every summary
 scalar to its underlying detail table. Rolling-window "current" cards
 are deliberately unfiltered (always as-of-now).
 
-**Pairing Productivity** (10 data cards + a header card;
-`scripts/provision_pairing_productivity.py`): your flown trips against the
+**Efficiency** (10 data cards + a header card;
+`scripts/provision_efficiency.py`): your flown trips against the
 SkyWest RSR **system-wide** averages in Grist `RSR_Metrics` (imported from the
 monthly RSR PDFs by the logbook repo's `import-rsr`). Eight RSR metrics, as
 totals over totals for the trips in view: credit and block per duty period and
@@ -154,7 +154,7 @@ Every card is recomputed **independently from the live Grist REST API**
 (not the synced SQLite) with tolerance 0.1 — see
 [`verification-report.md`](verification-report.md). Current status:
 **63/63 cards match** (21 Daily Ops + 11 Application Reference + 24 Trip
-Efficiency & Duty Legality + 7 Pairing Productivity; its three detail
+Efficiency & Duty Legality + 7 Efficiency; its three detail
 tables reuse the verified per-trip query). Stage-1 plumbing check: Metabase `Flights`
 row count == live Grist row count.
 
@@ -191,11 +191,11 @@ python3 scripts/metabase_setup.py           # first-run setup + datasource
 python3 scripts/provision_daily_ops.py      # Daily Ops + homepage
 python3 scripts/provision_application_ref.py
 python3 scripts/provision_duty_legality.py  # Trip Efficiency & Duty Legality
-python3 scripts/provision_pairing_productivity.py
+python3 scripts/provision_efficiency.py
 python3 scripts/verify_daily_ops.py         # all four write verification-report.md
 python3 scripts/verify_application_ref.py
 python3 scripts/verify_duty_legality.py
-python3 scripts/verify_pairing_productivity.py
+python3 scripts/verify_efficiency.py
 printf '%s\n' '*/15 * * * * /home/mint/Developer/logbook-visualize/sync-grist.sh # logbook-visualize sync' | crontab -
 ```
 
@@ -217,7 +217,7 @@ widgets pointing at the public links in [`embed-urls.md`](embed-urls.md)
 
 - Grist page **"Analytics (Metabase)"** → Daily Ops dashboard
 - Grist page **"Application Reference"** → Application Reference dashboard
-- Grist page **"Pairing Productivity"** → Pairing Productivity dashboard
+- Grist page **"Efficiency"** → Efficiency dashboard
 - Grist page **"Trip Efficiency & Duty Legality"** → third dashboard
   (public link minted 2026-07-28; add the Grist Custom-URL page pointing
   at it — same pattern as the other two)
