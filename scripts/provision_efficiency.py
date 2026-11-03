@@ -4,6 +4,8 @@ Personal: totals over your flown trips, e.g. credit per day = total credit /
 total trip days.
 SkyWest: for each month, the average of the CRJ200, CRJ550 and CRJ7&9 values
 in the Grist RSR_Metrics table.
+ORD: the same average over the ORD domicile reports, which publish credit per
+day only, so ORD appears on that one metric and nowhere else.
 
 Usage: python3 scripts/provision_efficiency.py
 """
@@ -17,7 +19,8 @@ HEADER = (
     "*SkyWest* values are the system-wide RSR values, averaged across the "
     "CRJ200, CRJ550 and CRJ7&9 fleets. **Index = Personal ÷ SkyWest** for "
     "'Higher' metrics and SkyWest ÷ Personal for 'Lower' metrics, so an "
-    "Index above 1.00 always means better than SkyWest.")
+    "Index above 1.00 always means better than SkyWest. *ORD* is the same "
+    "average over the ORD reports, which publish credit per day only.")
 
 # One row per flown trip: credit, block, TAFB, days, duty periods, duty hours.
 FLOWN = """
@@ -41,7 +44,8 @@ PERSONAL = """
   FROM flown GROUP BY month
 """
 
-# SkyWest metrics per month: average of the three CRJ fleets.
+# SkyWest metrics per month: average of the three CRJ fleets, system-wide
+# reports only (RSR_Metrics also holds domicile rows).
 SKYWEST = """
   SELECT Data_Month AS month,
          AVG(Cr_per_DP)   AS cr_dp,   AVG(Cr_per_Day)  AS cr_day,
@@ -49,12 +53,21 @@ SKYWEST = """
          AVG(TAFB_per_Bk) AS tafb_bk, AVG(TAFB_per_Cr) AS tafb_cr,
          AVG(Duty_per_Bk) AS duty_bk, AVG(Duty_per_Cr) AS duty_cr
   FROM RSR_Metrics
-  WHERE Fleet IN ('CRJ200', 'CRJ550', 'CRJ7&9')
+  WHERE Scope = 'SYS' AND Fleet IN ('CRJ200', 'CRJ550', 'CRJ7&9')
+  GROUP BY Data_Month
+"""
+
+# ORD metrics per month: the same average over the ORD domicile reports. They
+# carry credit per day and nothing else, so this has one column.
+ORD = """
+  SELECT Data_Month AS month, AVG(Cr_per_Day) AS cr_day
+  FROM RSR_Metrics
+  WHERE Scope = 'ORD' AND Fleet IN ('CRJ200', 'CRJ550', 'CRJ7&9')
   GROUP BY Data_Month
 """
 
 WITH = (f"WITH flown AS ({FLOWN}),\n personal AS ({PERSONAL}),\n"
-        f" skywest AS ({SKYWEST})\n")
+        f" skywest AS ({SKYWEST}),\n ord AS ({ORD})\n")
 
 # All months together: your totals vs the average of SkyWest's monthly values
 # for the months you flew.
@@ -69,22 +82,35 @@ s AS (
   SELECT AVG(cr_dp) AS cr_dp, AVG(cr_day) AS cr_day, AVG(bk_dp) AS bk_dp,
          AVG(bk_day) AS bk_day, AVG(tafb_bk) AS tafb_bk, AVG(tafb_cr) AS tafb_cr,
          AVG(duty_bk) AS duty_bk, AVG(duty_cr) AS duty_cr
-  FROM skywest WHERE month IN (SELECT month FROM flown))
-SELECT 'Credit / duty period' AS Metric, 'Higher' AS Better, ROUND(p.cr_dp, 2) AS Personal, ROUND(s.cr_dp, 2) AS SkyWest, ROUND(p.cr_dp / s.cr_dp, 2) AS [Index] FROM p, s
+  FROM skywest WHERE month IN (SELECT month FROM flown)),
+o AS (SELECT AVG(cr_day) AS cr_day FROM ord WHERE month IN (SELECT month FROM flown))
+SELECT 'Credit / duty period' AS Metric, 'Higher' AS Better, ROUND(p.cr_dp, 2) AS Personal, ROUND(s.cr_dp, 2) AS SkyWest, NULL AS ORD, ROUND(p.cr_dp / s.cr_dp, 2) AS [Index] FROM p, s
 UNION ALL
-SELECT 'Credit / day', 'Higher', ROUND(p.cr_day, 2), ROUND(s.cr_day, 2), ROUND(p.cr_day / s.cr_day, 2) FROM p, s
+SELECT 'Credit / day', 'Higher', ROUND(p.cr_day, 2), ROUND(s.cr_day, 2), ROUND(o.cr_day, 2), ROUND(p.cr_day / s.cr_day, 2) FROM p, s, o
 UNION ALL
-SELECT 'Block / duty period', 'Higher', ROUND(p.bk_dp, 2), ROUND(s.bk_dp, 2), ROUND(p.bk_dp / s.bk_dp, 2) FROM p, s
+SELECT 'Block / duty period', 'Higher', ROUND(p.bk_dp, 2), ROUND(s.bk_dp, 2), NULL, ROUND(p.bk_dp / s.bk_dp, 2) FROM p, s
 UNION ALL
-SELECT 'Block / day', 'Higher', ROUND(p.bk_day, 2), ROUND(s.bk_day, 2), ROUND(p.bk_day / s.bk_day, 2) FROM p, s
+SELECT 'Block / day', 'Higher', ROUND(p.bk_day, 2), ROUND(s.bk_day, 2), NULL, ROUND(p.bk_day / s.bk_day, 2) FROM p, s
 UNION ALL
-SELECT 'TAFB / block', 'Lower', ROUND(p.tafb_bk, 2), ROUND(s.tafb_bk, 2), ROUND(s.tafb_bk / p.tafb_bk, 2) FROM p, s
+SELECT 'TAFB / block', 'Lower', ROUND(p.tafb_bk, 2), ROUND(s.tafb_bk, 2), NULL, ROUND(s.tafb_bk / p.tafb_bk, 2) FROM p, s
 UNION ALL
-SELECT 'TAFB / credit', 'Lower', ROUND(p.tafb_cr, 2), ROUND(s.tafb_cr, 2), ROUND(s.tafb_cr / p.tafb_cr, 2) FROM p, s
+SELECT 'TAFB / credit', 'Lower', ROUND(p.tafb_cr, 2), ROUND(s.tafb_cr, 2), NULL, ROUND(s.tafb_cr / p.tafb_cr, 2) FROM p, s
 UNION ALL
-SELECT 'Duty / block', 'Lower', ROUND(p.duty_bk, 2), ROUND(s.duty_bk, 2), ROUND(s.duty_bk / p.duty_bk, 2) FROM p, s
+SELECT 'Duty / block', 'Lower', ROUND(p.duty_bk, 2), ROUND(s.duty_bk, 2), NULL, ROUND(s.duty_bk / p.duty_bk, 2) FROM p, s
 UNION ALL
-SELECT 'Duty / credit', 'Lower', ROUND(p.duty_cr, 2), ROUND(s.duty_cr, 2), ROUND(s.duty_cr / p.duty_cr, 2) FROM p, s
+SELECT 'Duty / credit', 'Lower', ROUND(p.duty_cr, 2), ROUND(s.duty_cr, 2), NULL, ROUND(s.duty_cr / p.duty_cr, 2) FROM p, s
+"""
+
+
+# Credit per day is the only metric the ORD reports publish, so it is the one
+# chart with three lines and is written out rather than built by chart_sql.
+CR_DAY_CHART_SQL = WITH + """
+SELECT p.month AS Month, ROUND(p.cr_day, 2) AS Personal,
+       ROUND(s.cr_day, 2) AS SkyWest, ROUND(o.cr_day, 2) AS ORD
+FROM personal p
+LEFT JOIN skywest s ON s.month = p.month
+LEFT JOIN ord o ON o.month = p.month
+ORDER BY p.month
 """
 
 
@@ -101,13 +127,16 @@ MONTHLY_SQL = WITH + """
 SELECT p.month AS Month, p.trips AS Trips,
        ROUND(p.cr_dp, 2)   AS [Credit/DP],     ROUND(s.cr_dp, 2)   AS [Credit/DP SkyWest],
        ROUND(p.cr_day, 2)  AS [Credit/day],    ROUND(s.cr_day, 2)  AS [Credit/day SkyWest],
+       ROUND(o.cr_day, 2)  AS [Credit/day ORD],
        ROUND(p.bk_dp, 2)   AS [Block/DP],      ROUND(s.bk_dp, 2)   AS [Block/DP SkyWest],
        ROUND(p.bk_day, 2)  AS [Block/day],     ROUND(s.bk_day, 2)  AS [Block/day SkyWest],
        ROUND(p.tafb_bk, 2) AS [TAFB/block],    ROUND(s.tafb_bk, 2) AS [TAFB/block SkyWest],
        ROUND(p.tafb_cr, 2) AS [TAFB/credit],   ROUND(s.tafb_cr, 2) AS [TAFB/credit SkyWest],
        ROUND(p.duty_bk, 2) AS [Duty/block],    ROUND(s.duty_bk, 2) AS [Duty/block SkyWest],
        ROUND(p.duty_cr, 2) AS [Duty/credit],   ROUND(s.duty_cr, 2) AS [Duty/credit SkyWest]
-FROM personal p LEFT JOIN skywest s ON s.month = p.month
+FROM personal p
+LEFT JOIN skywest s ON s.month = p.month
+LEFT JOIN ord o ON o.month = p.month
 ORDER BY p.month DESC
 """
 
@@ -121,17 +150,19 @@ FROM flown ORDER BY start DESC
 """
 
 RSR_SQL = """
-SELECT Data_Month AS Month, Fleet,
+SELECT Data_Month AS Month, Scope, Fleet,
        ROUND(Cr_per_DP, 2) AS [Credit/DP], ROUND(Cr_per_Day, 2) AS [Credit/day],
        ROUND(Bk_per_DP, 2) AS [Block/DP], ROUND(Bk_per_Day, 2) AS [Block/day],
        ROUND(TAFB_per_Bk, 2) AS [TAFB/block], ROUND(TAFB_per_Cr, 2) AS [TAFB/credit],
        ROUND(Duty_per_Bk, 2) AS [Duty/block], ROUND(Duty_per_Cr, 2) AS [Duty/credit]
 FROM RSR_Metrics
 WHERE Fleet IN ('CRJ200', 'CRJ550', 'CRJ7&9')
-ORDER BY Data_Month DESC, Fleet
+ORDER BY Data_Month DESC, Scope, Fleet
 """
 
 LINE = {"graph.dimensions": ["Month"], "graph.metrics": ["Personal", "SkyWest"]}
+LINE_ORD = {"graph.dimensions": ["Month"],
+            "graph.metrics": ["Personal", "SkyWest", "ORD"]}
 
 # (name, sql, display, viz, (row, col, width, height)); the header takes rows 0-3
 CARDS = [
@@ -139,7 +170,7 @@ CARDS = [
     ("Trips in View", WITH + "SELECT COUNT(*) FROM flown", "scalar", {}, (4, 16, 8, 4)),
     ("Credit in View", WITH + "SELECT ROUND(SUM(credit), 1) FROM flown", "scalar",
      {"scalar.suffix": " h"}, (8, 16, 8, 5)),
-    ("Credit per Day by Month", chart_sql("cr_day"), "line", LINE, (13, 0, 12, 6)),
+    ("Credit per Day by Month", CR_DAY_CHART_SQL, "line", LINE_ORD, (13, 0, 12, 6)),
     ("Credit per Duty Period by Month", chart_sql("cr_dp"), "line", LINE, (13, 12, 12, 6)),
     ("TAFB per Credit by Month", chart_sql("tafb_cr"), "line", LINE, (19, 0, 12, 6)),
     ("Duty per Credit by Month", chart_sql("duty_cr"), "line", LINE, (19, 12, 12, 6)),
