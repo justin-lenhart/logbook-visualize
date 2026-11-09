@@ -32,7 +32,7 @@ Toward 1.0 from here:
   tiles, landings currency (61.57), IFR currency inputs if approaches/
   holds get logged consistently.
 
-**URL: <http://100.78.241.102:3000>** (Tailscale-only bind, like Grist).
+**URL: <http://100.78.232.7:3000>** (Tailscale-only bind, like Grist).
 Login: `whoostie@gmail.com`; the admin password lives on mintbox in the
 gitignored **`~/Developer/logbook-visualize/.env`** (`MB_ADMIN_PASSWORD`,
 chmod 600 — never committed, never printed). The landing page is the
@@ -45,7 +45,7 @@ the *Logbook* collection).
 ```
 Grist doc (live)                       Metabase container
 ~/docker/grist/docs/<docId>.grist      metabase/metabase:latest
-        │  read-only                   bound to 100.78.241.102:3000
+        │  read-only                   bound to 100.78.232.7:3000
         │  SQLite online backup        app data: ~/docker/metabase/data
         ▼  (cron, */15)                heap capped at 1 GB
 ~/docker/metabase/db/logbook.db  ──►   mounted read-only at /logbook
@@ -174,7 +174,7 @@ to Grist). Schema additions that would close each gap are listed.
 cd ~/Developer/logbook-visualize
 cp .env.example .env        # set MB_ADMIN_PASSWORD (generate one), TS_IP
 ./sync-grist.sh             # first copy of logbook.db
-docker compose up -d        # Metabase on http://100.78.241.102:3000
+docker compose up -d        # Metabase on http://100.78.232.7:3000
 python3 scripts/metabase_setup.py           # first-run setup + datasource
 python3 scripts/provision_daily_ops.py      # Daily Ops + homepage
 python3 scripts/provision_application_ref.py

@@ -12,13 +12,13 @@ from collections import defaultdict
 
 from mb import Metabase, REPO_ROOT
 
-GRIST_URL = "http://100.78.241.102:8484"
-GRIST_DOC = open("/home/mint/Developer/homelab/migration/grist-doc.txt").read().strip()
+GRIST_URL = "http://100.78.232.7:8484"
+GRIST_DOC = open("/srv/homelab/migration/grist-doc.txt").read().strip()
 TOL = 0.1
 
 
 def grist_key():
-    for line in open("/home/mint/Developer/homelab/migration/.env"):
+    for line in open("/srv/homelab/migration/.env"):
         if line.startswith("GRIST_API_KEY="):
             return line.strip().split("=", 1)[1]
     raise RuntimeError("no GRIST_API_KEY")

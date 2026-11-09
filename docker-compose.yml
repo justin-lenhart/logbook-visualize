@@ -14,6 +14,6 @@ services:
       JAVA_OPTS: "-Xmx1g"
       MB_ANON_TRACKING_ENABLED: "false"
     volumes:
-      - /srv/data/appdata/metabase/data:/metabase-data
+      - /srv/appdata/metabase/data:/metabase-data
       # Read-only mount of the synced SQLite copy of the Grist Logbook doc
-      - /srv/data/appdata/metabase/db:/logbook:ro
+      - /srv/appdata/metabase/db:/logbook:ro
