@@ -31,11 +31,31 @@ if [ -f "$LOG" ] && [ "$(wc -l < "$LOG")" -gt 200 ]; then
 fi
 
 python3 - "$GRIST_DOC" "$TMP" "$DEST" <<'PYEOF' >> "$LOG" 2>&1
-import sqlite3, sys, os, time
+import marshal, sqlite3, sys, os, time
 
 src_path, tmp_path, dest_path = sys.argv[1], sys.argv[2], sys.argv[3]
 KEEP = {"Flights", "Trips", "Duty_Periods", "Aircraft", "RSR_Metrics"}
 stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+
+def last_data_change(conn):
+    """Epoch seconds (UTC) of the newest Grist action that touched a user
+    table, read from the doc's action history. Layout-only actions (column
+    widths, view settings: tables named _grist_*) are skipped, so the result
+    is when the DATA last changed. None if it cannot be determined."""
+    try:
+        for (body,) in conn.execute(
+                "SELECT body FROM _gristsys_ActionHistory ORDER BY id DESC LIMIT 500"):
+            action = marshal.loads(body)
+            for ua in action.get("userActions", []):
+                if (len(ua) > 1 and isinstance(ua[1], str)
+                        and not ua[1].startswith("_grist")):
+                    return int(action["info"][1]["time"] / 1000)
+    except Exception as e:
+        print(f"{stamp} WARN last_data_change: {type(e).__name__}: {e}")
+    return None
+
 
 try:
     if os.path.exists(tmp_path):
@@ -45,6 +65,7 @@ try:
     src = sqlite3.connect(f"file:{src_path}?mode=ro", uri=True)
     tmp = sqlite3.connect(tmp_path)
     src.backup(tmp)
+    data_changed_at = last_data_change(src)
     src.close()
 
     # 2. Prune the COPY down to the scope tables; drop views/indexes on
@@ -57,11 +78,13 @@ try:
     tmp.commit()
     tmp.execute("VACUUM")
 
-    # Stamp the sync time into the copy (feeds the dashboards' "Last
-    # Update" tiles; epoch seconds, UTC).
-    tmp.execute("CREATE TABLE IF NOT EXISTS sync_meta (synced_at INTEGER)")
-    tmp.execute("DELETE FROM sync_meta")
-    tmp.execute("INSERT INTO sync_meta VALUES (?)", (int(time.time()),))
+    # Stamp freshness into the copy (feeds the dashboards' "Data Last
+    # Changed" and "Last Sync" tiles; epoch seconds, UTC): when the Grist
+    # data last changed, and when this copy was taken.
+    tmp.execute("DROP TABLE IF EXISTS sync_meta")
+    tmp.execute("CREATE TABLE sync_meta (synced_at INTEGER, data_changed_at INTEGER)")
+    tmp.execute("INSERT INTO sync_meta VALUES (?, ?)",
+                (int(time.time()), data_changed_at))
     tmp.commit()
 
     counts = {t: tmp.execute(f'SELECT COUNT(*) FROM "{t}"').fetchone()[0]

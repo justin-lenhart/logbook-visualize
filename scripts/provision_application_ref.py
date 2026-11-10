@@ -13,7 +13,8 @@ Usage: python3 scripts/provision_application_ref.py
 """
 from mb import Metabase
 from provision_daily_ops import (get_logbook_db_id, ensure_collection,
-                                 provision, archive_cards_by_name, TS_SQL)
+                                 provision, archive_cards_by_name, TS_SQL,
+                                 SYNC_SQL, FRESHNESS_TITLES)
 
 DASHBOARD_NAME = "Application Reference"
 
@@ -92,7 +93,10 @@ CHECK_TYPE_SQL = ("SELECT ROUND((SELECT SUM(Block_Time) FROM Flights) - "
 CHECK_NO_AIRCRAFT_SQL = ("SELECT COUNT(*) FROM Flights WHERE COALESCE(Deadhead,0) = 0 "
                          "AND (Aircraft IS NULL OR Aircraft = 0)")
 
-BUCKETS = [("0-12 mo", 0, 12), ("13-24", 13, 24), ("25-36", 25, 36),
+# Recency buckets count CALENDAR months back from the current month (0 = this
+# month). The first three are cumulative and overlap: "0-3 mo" = this month
+# plus the three before it, and so on; from 13-24 on the buckets are disjoint.
+BUCKETS = [("0-3 mo", 0, 3), ("0-6 mo", 0, 6), ("0-12 mo", 0, 12), ("13-24", 13, 24), ("25-36", 25, 36),
            ("37-48", 37, 48), ("49-60", 49, 60)]
 _bucket_cols = ", ".join(
     f"ROUND(SUM(CASE WHEN {MONTHS_AGO} BETWEEN {lo} AND {hi} "
@@ -101,6 +105,7 @@ _bucket_cols = ", ".join(
 
 CARDS = [
     ("App: Last Update", TS_SQL, "scalar", {}),
+    ("App: Last Sync", SYNC_SQL, "scalar", {}),
     ("App: Total Time", "SELECT ROUND(SUM(Block_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("App: Total PIC", "SELECT ROUND(SUM(PIC_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("App: Airplane", f"SELECT ROUND(SUM(Block_Time),1) FROM Flights WHERE {AIRPLANE}", "scalar", {"scalar.suffix": " h"}),
@@ -154,6 +159,8 @@ CARDS = [
      "ORDER BY sortkey DESC",
      "table", {"table.columns": [
          {"name": "FAA Type", "enabled": True},
+         {"name": "0-3 mo", "enabled": True},
+         {"name": "0-6 mo", "enabled": True},
          {"name": "0-12 mo", "enabled": True},
          {"name": "13-24", "enabled": True},
          {"name": "25-36", "enabled": True},
@@ -177,14 +184,16 @@ LAYOUT = {
     "Currency — Block Hours by Recency": (24, 0, 24, 9),
     # Last Update: small strip at the very bottom (small tile = small text)
     "App: Last Update": (33, 0, 6, 2),
-    # Integrity checks beside it: each must read 0
-    "Check: Total minus Categories": (33, 6, 6, 2),
-    "Check: Total minus FAA Types": (33, 12, 6, 2),
-    "Check: Flights Missing Aircraft": (33, 18, 6, 2),
+    "App: Last Sync": (33, 6, 6, 2),
+    # Integrity checks below: each must read 0
+    "Check: Total minus Categories": (35, 0, 8, 2),
+    "Check: Total minus FAA Types": (35, 8, 8, 2),
+    "Check: Flights Missing Aircraft": (35, 16, 8, 2),
 }
 
 DASHCARD_VIZ = {
-    "App: Last Update": {"card.title": "Last Update"},
+    "App: Last Update": {"card.title": FRESHNESS_TITLES[0]},
+    "App: Last Sync": {"card.title": FRESHNESS_TITLES[1]},
     "Check: Total minus Categories": {"card.title": "Check: Total − Categories (must be 0)"},
     "Check: Total minus FAA Types": {"card.title": "Check: Total − FAA Types (must be 0)"},
     "Check: Flights Missing Aircraft": {"card.title": "Check: Flights w/o Aircraft (must be 0)"},

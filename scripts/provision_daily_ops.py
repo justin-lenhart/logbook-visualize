@@ -26,22 +26,32 @@ CUR_MONTH = ("Flight_Date >= strftime('%s', date('now','start of month')) "
              "AND Flight_Date < strftime('%s', date('now','start of month','+1 month')) "
              "AND Legacy_Summary = 0")
 
-# "Last Update" tile: sync time stamped into logbook.db by sync-grist.sh
-# (sync_meta.synced_at, epoch UTC) -> 'HHMMZ | DD MMM YYYY'
-TS_SQL = (
-    "SELECT strftime('%H%M', synced_at, 'unixepoch') || 'Z | ' || "
-    "strftime('%d', synced_at, 'unixepoch') || ' ' || "
-    "CASE strftime('%m', synced_at, 'unixepoch') "
-    "WHEN '01' THEN 'Jan' WHEN '02' THEN 'Feb' WHEN '03' THEN 'Mar' "
-    "WHEN '04' THEN 'Apr' WHEN '05' THEN 'May' WHEN '06' THEN 'Jun' "
-    "WHEN '07' THEN 'Jul' WHEN '08' THEN 'Aug' WHEN '09' THEN 'Sep' "
-    "WHEN '10' THEN 'Oct' WHEN '11' THEN 'Nov' WHEN '12' THEN 'Dec' END "
-    "|| ' ' || strftime('%Y', synced_at, 'unixepoch') "
-    "FROM sync_meta ORDER BY synced_at DESC LIMIT 1")
+# Freshness tiles, stamped into logbook.db by sync-grist.sh (sync_meta, epoch
+# UTC) and rendered as 'HHMMZ | DD MMM YYYY':
+#   TS_SQL   — data_changed_at: when the Grist DATA last changed (newest
+#              action on a user table). This is the "is this current?" answer.
+#   SYNC_SQL — synced_at: when the 15-minute copy to Metabase last ran.
+def _stamp_sql(col):
+    return (
+        f"SELECT COALESCE(strftime('%H%M', {col}, 'unixepoch') || 'Z | ' || "
+        f"strftime('%d', {col}, 'unixepoch') || ' ' || "
+        f"CASE strftime('%m', {col}, 'unixepoch') "
+        "WHEN '01' THEN 'Jan' WHEN '02' THEN 'Feb' WHEN '03' THEN 'Mar' "
+        "WHEN '04' THEN 'Apr' WHEN '05' THEN 'May' WHEN '06' THEN 'Jun' "
+        "WHEN '07' THEN 'Jul' WHEN '08' THEN 'Aug' WHEN '09' THEN 'Sep' "
+        "WHEN '10' THEN 'Oct' WHEN '11' THEN 'Nov' WHEN '12' THEN 'Dec' END "
+        f"|| ' ' || strftime('%Y', {col}, 'unixepoch'), 'unknown') "
+        "FROM sync_meta LIMIT 1")
+
+
+TS_SQL = _stamp_sql("data_changed_at")
+SYNC_SQL = _stamp_sql("synced_at")
+FRESHNESS_TITLES = ("Data Last Changed", "Last Sync")
 
 # (name, sql, display, viz)
 CARDS = [
     ("Ops: Last Update", TS_SQL, "scalar", {}),
+    ("Ops: Last Sync", SYNC_SQL, "scalar", {}),
     # -- career totals (all ops, legacy INCLUDED) --
     ("Career: Total Time", "SELECT ROUND(SUM(Block_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
     ("Career: PIC", "SELECT ROUND(SUM(PIC_Time),1) FROM Flights", "scalar", {"scalar.suffix": " h"}),
@@ -137,11 +147,13 @@ LAYOUT["Avg TAFB by Month"] = (24, 0, 24, 6)
 LAYOUT["Block by Category x Position"] = (30, 0, 8, 6)
 LAYOUT["Block by Class x Position"] = (30, 8, 8, 6)
 LAYOUT["Block by Engine x Position"] = (30, 16, 8, 6)
-# Last Update: small strip at the very bottom (small tile = small text)
+# Freshness tiles: small strip at the very bottom (small tile = small text)
 LAYOUT["Ops: Last Update"] = (36, 0, 6, 2)
+LAYOUT["Ops: Last Sync"] = (36, 6, 6, 2)
 
 # Per-card dashcard visualization overrides (e.g. displayed title)
-DASHCARD_VIZ = {"Ops: Last Update": {"card.title": "Last Update"}}
+DASHCARD_VIZ = {"Ops: Last Update": {"card.title": FRESHNESS_TITLES[0]},
+                "Ops: Last Sync": {"card.title": FRESHNESS_TITLES[1]}}
 
 
 def get_logbook_db_id(mb):

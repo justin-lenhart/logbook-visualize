@@ -27,7 +27,8 @@ Usage: python3 scripts/provision_duty_legality.py
 import uuid
 
 from mb import Metabase
-from provision_daily_ops import get_logbook_db_id, ensure_collection
+from provision_daily_ops import (get_logbook_db_id, ensure_collection,
+                                 TS_SQL, SYNC_SQL, FRESHNESS_TITLES)
 
 DASHBOARD_NAME = "Trip Efficiency & Duty Legality"
 
@@ -310,7 +311,15 @@ LAYOUT = {
     "Avg Credit Variance per Trip (h)": (36, 6, 6, 3),
     "Credit & Block per TAFB Day by Month": (36, 12, 12, 6),
     "Trip Efficiency Detail": (42, 0, 24, 9),
+    # Freshness tiles: small strip at the very bottom
+    "Duty: Last Update": (51, 0, 6, 2),
+    "Duty: Last Sync": (51, 6, 6, 2),
 }
+
+FRESHNESS_CARDS = [("Duty: Last Update", TS_SQL, "scalar", {}, ()),
+                   ("Duty: Last Sync", SYNC_SQL, "scalar", {}, ())]
+DASHCARD_TITLE = {"Duty: Last Update": FRESHNESS_TITLES[0],
+                  "Duty: Last Sync": FRESHNESS_TITLES[1]}
 
 # scalar -> detail-table click-through
 CLICK_TARGET = {
@@ -353,6 +362,7 @@ def make_card(mb, name, sql, display, viz, tags, db_id, coll_id):
 
 
 def main():
+    CARDS.extend(c for c in FRESHNESS_CARDS if c not in CARDS)
     mb = Metabase()
     mb.login()
     db_id = get_logbook_db_id(mb)
@@ -392,6 +402,8 @@ def main():
     for i, (name, _sql, _display, _viz, tags) in enumerate(CARDS):
         r, c, sx, sy = LAYOUT[name]
         viz = {}
+        if name in DASHCARD_TITLE:
+            viz["card.title"] = DASHCARD_TITLE[name]
         if name in CLICK_TARGET:
             viz["click_behavior"] = {
                 "type": "link", "linkType": "question",

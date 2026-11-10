@@ -10,7 +10,8 @@ day only, so ORD appears on that one metric and nowhere else.
 Usage: python3 scripts/provision_efficiency.py
 """
 from mb import Metabase
-from provision_daily_ops import ensure_collection, get_logbook_db_id
+from provision_daily_ops import (ensure_collection, get_logbook_db_id,
+                                 TS_SQL, SYNC_SQL, FRESHNESS_TITLES)
 
 DASHBOARD_NAME = "Efficiency"
 
@@ -177,7 +178,12 @@ CARDS = [
     ("Monthly Comparison", MONTHLY_SQL, "table", {}, (25, 0, 24, 7)),
     ("Trip Detail", TRIP_DETAIL_SQL, "table", {}, (32, 0, 24, 9)),
     ("SkyWest RSR by Month", RSR_SQL, "table", {}, (41, 0, 24, 8)),
+    # Freshness tiles: small strip at the very bottom
+    ("Eff: Last Update", TS_SQL, "scalar", {}, (49, 0, 6, 2)),
+    ("Eff: Last Sync", SYNC_SQL, "scalar", {}, (49, 6, 6, 2)),
 ]
+DASHCARD_TITLE = {"Eff: Last Update": FRESHNESS_TITLES[0],
+                  "Eff: Last Sync": FRESHNESS_TITLES[1]}
 
 
 def main():
@@ -209,7 +215,10 @@ def main():
                               collection_id=coll_id, database_id=db_id)
         print(f"  card {card['id']:>3}  {name}")
         dashcards.append({"id": -(i + 1), "card_id": card["id"], "row": row, "col": col,
-                          "size_x": width, "size_y": height})
+                          "size_x": width, "size_y": height,
+                          "visualization_settings":
+                              {"card.title": DASHCARD_TITLE[name]}
+                              if name in DASHCARD_TITLE else {}})
 
     mb.put(f"/api/dashboard/{dash_id}", {"parameters": [], "dashcards": dashcards})
     print(f"dashboard '{DASHBOARD_NAME}' (id {dash_id}): {len(CARDS)} cards")

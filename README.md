@@ -85,11 +85,11 @@ Grist doc (live)                       Metabase container
 
 ## Dashboards
 
-The **Daily Ops** and **Application Reference** dashboards open with a
-**"Last Update: HHMMZ | DD MMM YYYY"** tile (UTC) — the time
-`sync-grist.sh` last copied the Grist doc, stamped into `logbook.db` as the
-`sync_meta` table by the sync itself, so it reflects true data freshness
-(not page-load time).
+All four dashboards end with two freshness tiles (UTC, "HHMMZ | DD MMM YYYY"),
+both stamped into `logbook.db` by `sync-grist.sh` as the `sync_meta` table:
+**Data Last Changed** — the newest Grist action that touched a user table,
+read from the doc's action history (layout-only edits are ignored) — and
+**Last Sync** — when the 15-minute copy last ran. Neither is page-load time.
 
 **Daily Ops** (homepage, 21 data cards + the Last Update tile): career tiles (total / PIC / SIC /
 night / instrument / XC / credit / landings / flights — legacy included),
@@ -109,8 +109,9 @@ hours PIC / SIC / dual received / total (ASEL / AMEL / Helicopter / Powered Lift
 each row sums to its total, and the airplane classes sum to the 8710 Airplane total),
 three integrity checks that must read 0 (grand total minus categories, grand total
 minus FAA types, non-deadhead flights with no aircraft), and
-currency-by-recency block-hour buckets per FAA type (0–12 / 13–24 / 25–36 / 37–48 /
-49–60 / older months).
+currency-by-recency block-hour buckets per FAA type (0–3 / 0–6 / 0–12 / 13–24 /
+25–36 / 37–48 / 49–60 / older; calendar months back from the current month, the
+first three cumulative).
 
 **Trip Efficiency & Duty Legality** (24 data cards + a disclaimer card;
 `scripts/provision_duty_legality.py`): ⚠️ **personal analytics, NOT a

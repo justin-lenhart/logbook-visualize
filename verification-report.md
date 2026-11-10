@@ -1,4 +1,4 @@
-# Daily Ops verification — 2026-11-10 19:27 UTC
+# Daily Ops verification — 2026-11-10 19:39 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -28,7 +28,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **21/21 cards verified.**
 
-# Application Reference verification — 2026-11-10 19:27 UTC
+# Application Reference verification — 2026-11-10 19:41 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -51,7 +51,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **14/14 cards verified.**
 
-# Trip Efficiency & Duty Legality verification — 2026-09-18 23:56 UTC
+# Trip Efficiency & Duty Legality verification — 2026-11-10 19:41 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 on now-anchored rolling windows). FDP = report→release (conservative proxy); Table A/B shown as floor/ceiling pending local-time data.
 
@@ -79,7 +79,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1; ±0.5 o
 | Avg Block Variance per Trip (h) | ✅ matches live Grist |
 | Avg Credit Variance per Trip (h) | ✅ matches live Grist |
 | Credit & Block per TAFB Day by Month | ✅ matches live Grist |
-| Duty Period Legality Detail | ✅ 67 rows == live Grist |
-| Trip Efficiency Detail | ✅ 26 rows == live Grist |
+| Duty Period Legality Detail | ✅ 99 rows == live Grist |
+| Trip Efficiency Detail | ✅ 36 rows == live Grist |
 
 **24/24 cards verified.**

@@ -115,17 +115,23 @@ def build_expected():
         1 for f in flights if not f.get("Deadhead") and not f.get("Aircraft"))
 
     # Currency buckets per FAA type
-    cur = defaultdict(lambda: [0.0] * 6)
+    # columns: 0-3, 0-6, 0-12 (cumulative), then 13-24, 25-36, 37-48, 49-60, older
+    cur = defaultdict(lambda: [0.0] * 8)
     for f in flights:
         if not f.get("Flight_Date"):
             continue
         name = aircraft.get(f.get("Aircraft"), {}).get("FAA_Type", "?")
         m = months_ago(f["Flight_Date"])
-        idx = 0 if m <= 12 else 1 if m <= 24 else 2 if m <= 36 else \
-            3 if m <= 48 else 4 if m <= 60 else 5
-        cur[name][idx] += num(f.get("Block_Time"))
+        idx = 2 if m <= 12 else 3 if m <= 24 else 4 if m <= 36 else \
+            5 if m <= 48 else 6 if m <= 60 else 7
+        blk = num(f.get("Block_Time"))
+        cur[name][idx] += blk
+        if 0 <= m <= 3:
+            cur[name][0] += blk
+        if 0 <= m <= 6:
+            cur[name][1] += blk
     cur["TOTAL"] = [sum(v[i] for n, v in cur.items() if n != "TOTAL")
-                    for i in range(6)]
+                    for i in range(8)]
     if "?" in cur and not any(abs(x) > 1e-9 for x in cur["?"]):
         del cur["?"]
     exp["Currency — Block Hours by Recency"] = {
