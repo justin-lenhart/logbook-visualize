@@ -1,4 +1,4 @@
-# Daily Ops verification — 2026-09-18 23:56 UTC
+# Daily Ops verification — 2026-11-10 19:27 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -28,7 +28,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **21/21 cards verified.**
 
-# Application Reference verification — 2026-11-10 19:18 UTC
+# Application Reference verification — 2026-11-10 19:27 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
