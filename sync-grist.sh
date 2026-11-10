@@ -4,10 +4,10 @@
 # STRICTLY read-only toward Grist: the live .grist file is opened read-only
 # (SQLite URI mode=ro) and copied with the SQLite Online Backup API — the same
 # mechanism as the sqlite3 CLI's ".backup" command (the CLI is not installed on
-# mintbox, so Python's stdlib sqlite3.Connection.backup is used instead).
+# crushbox, so Python's stdlib sqlite3.Connection.backup is used instead).
 #
 # Pipeline: live .grist --(online backup)--> temp copy --(prune to scope
-# tables, vacuum)--> --(online backup in place)--> ~/docker/metabase/db/logbook.db
+# tables, vacuum)--> --(online backup in place)--> /srv/appdata/metabase/db/logbook.db
 # The final in-place backup preserves the destination inode so Metabase's
 # bind-mounted view of the file never goes stale.
 #
@@ -15,7 +15,7 @@
 # RSR averages). Airports and all Grist metadata/summary tables are dropped from
 # the copy — never the source.
 #
-# Cron: one line in mint's crontab runs this every 15 minutes.
+# Cron: one line in crushbox's crontab runs this every 15 minutes.
 set -euo pipefail
 
 GRIST_DOC="/srv/appdata/grist/docs/$(cat /srv/homelab/migration/grist-doc.txt).grist"

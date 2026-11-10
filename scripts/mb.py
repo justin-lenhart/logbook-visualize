@@ -1,7 +1,7 @@
 """Shared Metabase API client for provisioning scripts.
 
 Reads .env (TS_IP, MB_ADMIN_EMAIL, MB_ADMIN_PASSWORD) from the repo root.
-Uses only the Python stdlib (no pip installs on mintbox).
+Uses only the Python stdlib (no pip installs on crushbox).
 """
 import json
 import os
