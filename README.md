@@ -100,12 +100,15 @@ excluded), planned-vs-actual block and credit by month, avg TAFB by
 month, and Category / Class / Engine × Position
 block-hour pivots.
 
-**Application Reference** (11 data cards + the Last Update tile): headline numbers (total, PIC,
+**Application Reference** (14 data cards + the Last Update tile): headline numbers (total, PIC,
 airplane, rotorcraft, fixed-wing turbine, FW-turbine PIC, all-turbine),
 totals per FAA type (e.g. CL65 = CR2/CR5/CR7/CR9, subtypes flown listed) with
 instructor time and last-flown, FAA 8710
 hours-by-category matrix (incl. night T/O landings split PIC/SIC), class
-hours PIC/SIC (ASEL / AMEL / Helicopter / Powered Lift), and
+hours PIC / SIC / dual received / total (ASEL / AMEL / Helicopter / Powered Lift;
+each row sums to its total, and the airplane classes sum to the 8710 Airplane total),
+three integrity checks that must read 0 (grand total minus categories, grand total
+minus FAA types, non-deadhead flights with no aircraft), and
 currency-by-recency block-hour buckets per FAA type (0–12 / 13–24 / 25–36 / 37–48 /
 49–60 / older months).
 

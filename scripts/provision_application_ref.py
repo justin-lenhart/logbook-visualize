@@ -3,7 +3,8 @@ the derivable parts of the public gh-pages app sheets
 (justin-lenhart.github.io/logbook/apps/{ual,swa,faa,summary}.html).
 
 Built: per-aircraft totals + last-flown, headline numbers, FAA 8710
-category matrix, class PIC/SIC table, currency-by-recency buckets.
+category matrix, class hours table (PIC / SIC / dual received / total),
+currency-by-recency buckets, and three total-reconciliation checks.
 NOT built (underivable from Grist — see README "GAPS"): military sortie
 counts, x0.3 sortie conversions, type-rated flags, manufacturer/model
 splits, milestone targets, SWA custom category buckets.
@@ -17,7 +18,7 @@ from provision_daily_ops import (get_logbook_db_id, ensure_collection,
 DASHBOARD_NAME = "Application Reference"
 
 # Cards renamed in a later version; archived so they do not linger in the collection.
-RETIRED_CARDS = {"Totals by Aircraft"}
+RETIRED_CARDS = {"Totals by Aircraft", "Class Hours (PIC / SIC)"}
 
 # Applications ask for hours per FAA type (CL65, H1...), not per subtype
 # (CR2/CR5/CR7/CR9...). Subtypes flown are listed for reference.
@@ -65,6 +66,32 @@ HIDE_ORD = {"table.columns": [
     {"name": "Powered Lift", "enabled": True},
 ]}
 
+# Class table: PIC + SIC + Dual Recv = Total on every row, and the airplane
+# classes sum to the 8710 Airplane "Total Hours" (every flight row satisfies
+# PIC_Time + SIC_Time + Dual_Received = Block_Time).
+_CLASSES = [("ASEL", "Category='Airplane' AND Class='Single-Engine Land'"),
+            ("AMEL", "Category='Airplane' AND Class='Multi-Engine Land'"),
+            ("Helicopter", "Class='Rotorcraft'"),
+            ("Powered Lift", "Category='Powered Lift'")]
+_CLASS_COLS = [("PIC", "PIC_Time"), ("SIC", "SIC_Time"),
+               ("Dual Recv", "Dual_Received"), ("Total", "Block_Time")]
+CLASS_SQL = " UNION ALL ".join(
+    f"SELECT {i} AS ord, '{label}' AS Class, " + ", ".join(
+        f"ROUND(SUM(CASE WHEN {cond} THEN {col} ELSE 0 END),1) AS [{alias}]"
+        for alias, col in _CLASS_COLS) + " FROM Flights"
+    for i, (label, cond) in enumerate(_CLASSES, 1)) + " ORDER BY ord"
+
+# Integrity checks: grand total = sum of categories = sum of FAA types.
+# A flight with no Aircraft link has a null Category/Class and drops out of
+# every grouped card while still counting in Total Time. All three must read 0.
+CHECK_CATEGORY_SQL = ("SELECT ROUND(SUM(Block_Time) - SUM(CASE WHEN Category IS NOT NULL "
+                      "THEN Block_Time ELSE 0 END),1) FROM Flights")
+CHECK_TYPE_SQL = ("SELECT ROUND((SELECT SUM(Block_Time) FROM Flights) - "
+                  "(SELECT SUM(f.Block_Time) FROM Flights f JOIN Aircraft a "
+                  "ON f.Aircraft = a.id WHERE a.FAA_Type IS NOT NULL AND a.FAA_Type <> ''),1)")
+CHECK_NO_AIRCRAFT_SQL = ("SELECT COUNT(*) FROM Flights WHERE COALESCE(Deadhead,0) = 0 "
+                         "AND (Aircraft IS NULL OR Aircraft = 0)")
+
 BUCKETS = [("0-12 mo", 0, 12), ("13-24", 13, 24), ("25-36", 25, 36),
            ("37-48", 37, 48), ("49-60", 49, 60)]
 _bucket_cols = ", ".join(
@@ -102,25 +129,17 @@ CARDS = [
 
     ("FAA 8710 — Hours by Category", FAA_8710_SQL, "table", HIDE_ORD),
 
-    ("Class Hours (PIC / SIC)",
-     "SELECT 1 AS ord, 'ASEL' AS Class, "
-     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Single-Engine Land' THEN PIC_Time ELSE 0 END),1) AS PIC, "
-     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Single-Engine Land' THEN SIC_Time ELSE 0 END),1) AS SIC FROM Flights "
-     "UNION ALL SELECT 2, 'AMEL', "
-     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Multi-Engine Land' THEN PIC_Time ELSE 0 END),1), "
-     "ROUND(SUM(CASE WHEN Category='Airplane' AND Class='Multi-Engine Land' THEN SIC_Time ELSE 0 END),1) FROM Flights "
-     "UNION ALL SELECT 3, 'Helicopter', "
-     "ROUND(SUM(CASE WHEN Class='Rotorcraft' THEN PIC_Time ELSE 0 END),1), "
-     "ROUND(SUM(CASE WHEN Class='Rotorcraft' THEN SIC_Time ELSE 0 END),1) FROM Flights "
-     "UNION ALL SELECT 4, 'Powered Lift', "
-     "ROUND(SUM(CASE WHEN Category='Powered Lift' THEN PIC_Time ELSE 0 END),1), "
-     "ROUND(SUM(CASE WHEN Category='Powered Lift' THEN SIC_Time ELSE 0 END),1) FROM Flights "
-     "ORDER BY ord",
-     "table", {"table.columns": [
-         {"name": "ord", "enabled": False},
-         {"name": "Class", "enabled": True},
-         {"name": "PIC", "enabled": True},
-         {"name": "SIC", "enabled": True}]}),
+    ("Class Hours", CLASS_SQL, "table", {"table.columns": [
+        {"name": "ord", "enabled": False},
+        {"name": "Class", "enabled": True},
+        {"name": "PIC", "enabled": True},
+        {"name": "SIC", "enabled": True},
+        {"name": "Dual Recv", "enabled": True},
+        {"name": "Total", "enabled": True}]}),
+
+    ("Check: Total minus Categories", CHECK_CATEGORY_SQL, "scalar", {"scalar.suffix": " h"}),
+    ("Check: Total minus FAA Types", CHECK_TYPE_SQL, "scalar", {"scalar.suffix": " h"}),
+    ("Check: Flights Missing Aircraft", CHECK_NO_AIRCRAFT_SQL, "scalar", {}),
 
     # TOTAL row is part of the result set (UNION ALL) so it always renders
     # with the table; the hidden sortkey pins it to the top by default.
@@ -154,13 +173,22 @@ LAYOUT = {
     "App: Turbine (All Categories)": (3, 16, 8, 3),
     "Totals by FAA Type": (6, 0, 24, 9),
     "FAA 8710 — Hours by Category": (15, 0, 12, 9),
-    "Class Hours (PIC / SIC)": (15, 12, 12, 9),
+    "Class Hours": (15, 12, 12, 9),
     "Currency — Block Hours by Recency": (24, 0, 24, 9),
     # Last Update: small strip at the very bottom (small tile = small text)
     "App: Last Update": (33, 0, 6, 2),
+    # Integrity checks beside it: each must read 0
+    "Check: Total minus Categories": (33, 6, 6, 2),
+    "Check: Total minus FAA Types": (33, 12, 6, 2),
+    "Check: Flights Missing Aircraft": (33, 18, 6, 2),
 }
 
-DASHCARD_VIZ = {"App: Last Update": {"card.title": "Last Update"}}
+DASHCARD_VIZ = {
+    "App: Last Update": {"card.title": "Last Update"},
+    "Check: Total minus Categories": {"card.title": "Check: Total − Categories (must be 0)"},
+    "Check: Total minus FAA Types": {"card.title": "Check: Total − FAA Types (must be 0)"},
+    "Check: Flights Missing Aircraft": {"card.title": "Check: Flights w/o Aircraft (must be 0)"},
+}
 
 
 def main():

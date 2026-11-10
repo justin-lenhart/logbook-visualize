@@ -56,6 +56,11 @@ def build_expected():
             per[name][fld] += num(f.get(fld))
         if f.get("Flight_Date"):
             last[name] = max(last.get(name, 0), f["Flight_Date"])
+    # Flights with no Aircraft link land in "?"; the cards (inner JOIN) have
+    # no such row. Zero-hour ones (deadheads) are fine to drop; any with time
+    # stay in, so the comparison fails alongside the Check: cards.
+    if "?" in per and not any(abs(x) > 1e-9 for x in per["?"].values()):
+        del per["?"]
     exp["Totals by FAA Type"] = {
         name: (", ".join(sorted(flown[name])),
                aircraft_attr(aircraft, name, "Category"),
@@ -95,12 +100,19 @@ def build_expected():
 
     asel = lambda f: airplane(f) and f.get("Class") == "Single-Engine Land"
     amel = lambda f: airplane(f) and f.get("Class") == "Multi-Engine Land"
-    exp["Class Hours (PIC / SIC)"] = {
-        "ASEL": (s("PIC_Time", asel), s("SIC_Time", asel)),
-        "AMEL": (s("PIC_Time", amel), s("SIC_Time", amel)),
-        "Helicopter": (s("PIC_Time", rotor), s("SIC_Time", rotor)),
-        "Powered Lift": (s("PIC_Time", plift), s("SIC_Time", plift)),
-    }
+    cls = lambda pred: (s("PIC_Time", pred), s("SIC_Time", pred),
+                        s("Dual_Received", pred), s("Block_Time", pred))
+    exp["Class Hours"] = {"ASEL": cls(asel), "AMEL": cls(amel),
+                          "Helicopter": cls(rotor), "Powered Lift": cls(plift)}
+
+    # Integrity checks (see INVARIANTS): grand total = categories = FAA types
+    typed = lambda f: bool(aircraft.get(f.get("Aircraft"), {}).get("FAA_Type"))
+    exp["Check: Total minus Categories"] = round(
+        s("Block_Time") - s("Block_Time", lambda f: f.get("Category")), 1)
+    exp["Check: Total minus FAA Types"] = round(
+        s("Block_Time") - s("Block_Time", typed), 1)
+    exp["Check: Flights Missing Aircraft"] = sum(
+        1 for f in flights if not f.get("Deadhead") and not f.get("Aircraft"))
 
     # Currency buckets per FAA type
     cur = defaultdict(lambda: [0.0] * 6)
@@ -114,9 +126,17 @@ def build_expected():
         cur[name][idx] += num(f.get("Block_Time"))
     cur["TOTAL"] = [sum(v[i] for n, v in cur.items() if n != "TOTAL")
                     for i in range(6)]
+    if "?" in cur and not any(abs(x) > 1e-9 for x in cur["?"]):
+        del cur["?"]
     exp["Currency — Block Hours by Recency"] = {
         name: tuple(round(x, 1) for x in v) for name, v in cur.items()}
     return exp
+
+
+# Cards that must read exactly 0: a non-zero value means some flight is in
+# the grand total but missing from the category / type breakdowns.
+INVARIANTS = ("Check: Total minus Categories", "Check: Total minus FAA Types",
+              "Check: Flights Missing Aircraft")
 
 
 def _raw(table):
@@ -184,15 +204,18 @@ def main():
         try:
             rows = mb.card_rows(cards[name])
             if name in ("Totals by FAA Type", "Currency — Block Hours by Recency",
-                        "FAA 8710 — Hours by Category", "Class Hours (PIC / SIC)"):
+                        "FAA 8710 — Hours by Category", "Class Hours"):
                 # strip the hidden 'ord' first column where present
-                if name in ("FAA 8710 — Hours by Category", "Class Hours (PIC / SIC)"):
+                if name in ("FAA 8710 — Hours by Category", "Class Hours"):
                     rows = [r[1:] for r in rows]
                 diffs = compare_named(exp, rows)
             else:
                 diffs = compare(exp, rows)
         except Exception as e:
             diffs = [f"query failed: {e}"]
+        if not diffs and name in INVARIANTS and exp != 0:
+            diffs = [f"invariant broken: {exp} (must be 0) — a flight is in the "
+                     "grand total but not in the category/type breakdowns"]
         if diffs:
             failures += 1
             lines.append(f"| {name} | ❌ {'; '.join(diffs)} |")

@@ -28,7 +28,7 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 
 **21/21 cards verified.**
 
-# Application Reference verification — 2026-09-18 23:56 UTC
+# Application Reference verification — 2026-11-10 19:18 UTC
 
 Every card recomputed independently from live Grist REST (tolerance 0.1).
 
@@ -43,10 +43,13 @@ Every card recomputed independently from live Grist REST (tolerance 0.1).
 | App: Turbine (All Categories) | ✅ matches live Grist |
 | Totals by FAA Type | ✅ matches live Grist |
 | FAA 8710 — Hours by Category | ✅ matches live Grist |
-| Class Hours (PIC / SIC) | ✅ matches live Grist |
+| Class Hours | ✅ matches live Grist |
+| Check: Total minus Categories | ✅ matches live Grist |
+| Check: Total minus FAA Types | ✅ matches live Grist |
+| Check: Flights Missing Aircraft | ✅ matches live Grist |
 | Currency — Block Hours by Recency | ✅ matches live Grist |
 
-**11/11 cards verified.**
+**14/14 cards verified.**
 
 # Trip Efficiency & Duty Legality verification — 2026-09-18 23:56 UTC
 
